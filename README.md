@@ -147,8 +147,11 @@ Sur la page d'un cours, deux sections :
 
 Options de la session :
 
-- **Coréen / Français / Aléatoire** : quelle face est affichée en premier.
-  « Aléatoire » tire le sens carte par carte.
+- **Coréen / Français / Aléatoire / Écoute** : quelle face est affichée en premier.
+  « Aléatoire » tire le sens carte par carte. « Écoute » n'affiche pas le mot :
+  la carte joue la prononciation, à toi de l'écrire avant de retourner. Le
+  bouton **Prononciation** décide si la romanisation s'affiche en indice — coupe-le
+  pour une écoute pure.
 - **Mélanger / Ordre du cours** : ordre de passage des cartes.
 - **Audio auto** : joue la prononciation dès que la face coréenne apparaît.
 - Chaque carte est marquée **Su** ou **À revoir**. En fin de session, un récapitulatif

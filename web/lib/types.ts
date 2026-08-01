@@ -18,6 +18,7 @@ export type Course = {
 
 export type CourseSummary = Omit<Course, "words"> & { wordCount: number }
 
-export type FrontSide = "korean" | "translation" | "random"
+/** `audio` plays the word without showing it, to write it from hearing alone. */
+export type FrontSide = "korean" | "translation" | "random" | "audio"
 
 export type CardOrder = "original" | "shuffled"

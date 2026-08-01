@@ -88,8 +88,10 @@ const settingsStore = (() => {
   }
 })()
 
+type Side = Exclude<FrontSide, "random">
+
 /** A word plus the side decided for this run (resolved once, so flipping is stable). */
-type DeckCard = { word: Word; front: "korean" | "translation" }
+type DeckCard = { word: Word; front: Side }
 
 type Verdict = "known" | "unknown"
 
@@ -164,22 +166,16 @@ export function FlashcardDeck({ words }: { words: Word[] }) {
   )
   const known = answered - failed.length
 
-  const front = current
-    ? current.front === "korean"
-      ? current.word.korean
-      : current.word.translation
-    : ""
-  const back = current
-    ? current.front === "korean"
-      ? current.word.translation
-      : current.word.korean
-    : ""
+  // An `audio` front hides the word, so its back is the Korean side too.
+  const backSide: Side = current?.front === "korean" ? "translation" : "korean"
 
-  // Autoplay reads the Korean side as soon as it becomes visible.
+  // Autoplay reads the Korean side as soon as it becomes visible. In `audio`
+  // mode the sound *is* the prompt, so it plays whatever the setting says.
   React.useEffect(() => {
-    if (!autoplay || !current) return
+    if (!current?.word.korean) return
     const koreanVisible = current.front === "korean" ? !flipped : flipped
-    if (koreanVisible && current.word.korean) speak(current.word.korean)
+    const isPrompt = current.front === "audio" && !flipped
+    if (isPrompt || (autoplay && koreanVisible)) speak(current.word.korean)
   }, [autoplay, current, flipped, speak])
 
   const answer = React.useCallback((verdict: Verdict) => {
@@ -282,6 +278,7 @@ export function FlashcardDeck({ words }: { words: Word[] }) {
           <ToggleGroupItem value="korean">Coréen</ToggleGroupItem>
           <ToggleGroupItem value="translation">Français</ToggleGroupItem>
           <ToggleGroupItem value="random">Aléatoire</ToggleGroupItem>
+          <ToggleGroupItem value="audio">Écoute</ToggleGroupItem>
         </ToggleGroup>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -385,16 +382,21 @@ export function FlashcardDeck({ words }: { words: Word[] }) {
               >
                 <CardFace
                   word={current.word}
-                  text={front}
                   side={current.front}
                   romanization={romanization}
-                  hint="Clique ou Espace pour retourner"
+                  hint={
+                    current.front === "audio"
+                      ? "S pour réécouter · Espace pour retourner"
+                      : "Clique ou Espace pour retourner"
+                  }
                 />
                 <CardFace
                   word={current.word}
-                  text={back}
-                  side={current.front === "korean" ? "translation" : "korean"}
+                  side={backSide}
                   romanization={romanization}
+                  // Nothing was shown on an `audio` prompt, so the reveal
+                  // carries the meaning as well as the word.
+                  translation={current.front === "audio"}
                   hint="← à revoir · su →"
                   className="[transform:rotateY(180deg)]"
                 />
@@ -439,18 +441,25 @@ export function FlashcardDeck({ words }: { words: Word[] }) {
   )
 }
 
+const FACE_LABEL: Record<Side, string> = {
+  korean: "한국어",
+  translation: "Français",
+  audio: "Écoute",
+}
+
 function CardFace({
   word,
-  text,
   side,
   romanization,
+  translation = false,
   hint,
   className,
 }: {
   word: Word
-  text: string
-  side: "korean" | "translation"
+  side: Side
   romanization: boolean
+  /** Adds the French meaning under a Korean face. */
+  translation?: boolean
   hint: string
   className?: string
 }) {
@@ -462,21 +471,31 @@ function CardFace({
       )}
     >
       <Badge variant="secondary" className="absolute top-3 left-3">
-        {side === "korean" ? "한국어" : "Français"}
+        {FACE_LABEL[side]}
       </Badge>
-      <p
-        className={cn(
-          "text-center font-semibold text-balance",
-          side === "korean" ? "text-4xl sm:text-5xl" : "text-2xl sm:text-3xl"
-        )}
-        lang={side === "korean" ? "ko" : "fr"}
-      >
-        {text || "—"}
-      </p>
-      {side === "korean" && romanization && word.romanization && (
+      {side === "audio" ? (
+        <Volume2Icon className="size-14 text-muted-foreground" />
+      ) : (
+        <p
+          className={cn(
+            "text-center font-semibold text-balance",
+            side === "korean" ? "text-4xl sm:text-5xl" : "text-2xl sm:text-3xl"
+          )}
+          lang={side === "korean" ? "ko" : "fr"}
+        >
+          {(side === "korean" ? word.korean : word.translation) || "—"}
+        </p>
+      )}
+      {side !== "translation" && romanization && word.romanization && (
         <p className="text-center text-muted-foreground">{word.romanization}</p>
       )}
-      {word.note && (
+      {translation && side === "korean" && word.translation && (
+        <p className="text-center text-muted-foreground" lang="fr">
+          {word.translation}
+        </p>
+      )}
+      {/* The note often spells the word out, so it stays hidden on the prompt. */}
+      {side !== "audio" && word.note && (
         <p className="max-w-prose text-center text-sm text-pretty text-muted-foreground">
           {word.note}
         </p>
