@@ -1,4 +1,21 @@
 services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flashcards}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?mot de passe Postgres requis}
+      POSTGRES_DB: ${POSTGRES_DB:-flashcards}
+    volumes:
+      # Postgres 18 wants the whole directory, not the `data` subfolder inside
+      # it — that is what makes a later `pg_upgrade --link` possible.
+      - flashcards-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flashcards}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   web:
     build:
       context: ./web
@@ -7,12 +24,16 @@ services:
     ports:
       - "${PORT:-3000}:3000"
     environment:
-      # Where the lesson JSON files live inside the container.
-      DATA_DIR: /data
       NODE_ENV: production
-    volumes:
-      - flashcards-data:/data
+      DATABASE_URL: postgres://${POSTGRES_USER:-flashcards}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-flashcards}
+      # Signs the session cookies. Rotating it logs everyone out.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?secret d'authentification requis}
+      # Public origin of the app, used for cookies and redirects.
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
-  flashcards-data:
+  flashcards-db:

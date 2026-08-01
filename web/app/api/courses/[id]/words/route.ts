@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { requireWriteAccess } from "@/lib/guard"
 import { normalizeWords } from "@/lib/normalize"
 import { createWord, updateCourse } from "@/lib/store"
 import type { Word } from "@/lib/types"
@@ -11,6 +12,9 @@ type Params = { params: Promise<{ id: string }> }
 /** Adds one word (`{ korean, ... }`) or many (`{ words: [...] }`). */
 export async function POST(request: Request, { params }: Params) {
   const { id } = await params
+  const access = await requireWriteAccess(id)
+  if ("denied" in access) return access.denied
+
   const body = (await request.json().catch(() => null)) as
     (Partial<Word> & { words?: unknown }) | null
   if (!body)

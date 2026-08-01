@@ -71,7 +71,14 @@ async function post(url, body) {
   try {
     response = await fetch(url, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        // Creating a lesson needs an account: paste the session cookie from a
+        // signed-in browser (devtools → Application → Cookies).
+        ...(process.env.FLASHCARDS_COOKIE
+          ? { cookie: process.env.FLASHCARDS_COOKIE }
+          : {}),
+      },
       body: JSON.stringify(body),
     })
   } catch (error) {
@@ -80,6 +87,11 @@ async function post(url, body) {
     )
   }
   const payload = await response.json().catch(() => null)
+  if (response.status === 401) {
+    throw new Error(
+      "Non authentifié. Renseigne FLASHCARDS_COOKIE avec le cookie de session d'un compte connecté."
+    )
+  }
   if (!response.ok) throw new Error(payload?.error ?? `Erreur HTTP ${response.status}`)
   return payload
 }

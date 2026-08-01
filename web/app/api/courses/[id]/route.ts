@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { requireWriteAccess } from "@/lib/guard"
 import { normalizeDate } from "@/lib/normalize"
 import { deleteCourse, getCourse, updateCourse } from "@/lib/store"
 
@@ -17,6 +18,9 @@ export async function GET(_request: Request, { params }: Params) {
 
 export async function PATCH(request: Request, { params }: Params) {
   const { id } = await params
+  const access = await requireWriteAccess(id)
+  if ("denied" in access) return access.denied
+
   const body = (await request.json().catch(() => ({}))) as {
     title?: string
     date?: string
@@ -34,6 +38,9 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(_request: Request, { params }: Params) {
   const { id } = await params
+  const access = await requireWriteAccess(id)
+  if ("denied" in access) return access.denied
+
   const deleted = await deleteCourse(id)
   if (!deleted)
     return NextResponse.json({ error: "Cours introuvable." }, { status: 404 })

@@ -30,9 +30,12 @@ import type { Word } from "@/lib/types"
 export function WordTable({
   courseId,
   words,
+  editable,
 }: {
   courseId: string
   words: Word[]
+  /** Read-only for visitors without write access on this lesson. */
+  editable: boolean
 }) {
   const router = useRouter()
   const [query, setQuery] = React.useState("")
@@ -82,12 +85,14 @@ export function WordTable({
             aria-label="Rechercher un mot"
           />
         </div>
-        <WordFormDialog courseId={courseId}>
-          <Button>
-            <PlusIcon data-icon="inline-start" />
-            Ajouter un mot
-          </Button>
-        </WordFormDialog>
+        {editable && (
+          <WordFormDialog courseId={courseId}>
+            <Button>
+              <PlusIcon data-icon="inline-start" />
+              Ajouter un mot
+            </Button>
+          </WordFormDialog>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -101,7 +106,9 @@ export function WordTable({
             </EmptyTitle>
             <EmptyDescription>
               {words.length === 0
-                ? "Ajoute un mot ou importe un JSON pour remplir ce cours."
+                ? editable
+                  ? "Ajoute un mot ou importe un JSON pour remplir ce cours."
+                  : "Ce cours ne contient pas encore de mots."
                 : `Rien ne correspond à « ${query} ».`}
             </EmptyDescription>
           </EmptyHeader>
@@ -115,7 +122,9 @@ export function WordTable({
                 <TableHead>Coréen</TableHead>
                 <TableHead>Prononciation</TableHead>
                 <TableHead>Traduction</TableHead>
-                <TableHead className="w-20 text-right">Actions</TableHead>
+                {editable && (
+                  <TableHead className="w-20 text-right">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -138,27 +147,29 @@ export function WordTable({
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Modifier ${word.korean}`}
-                        onClick={() => setEditing(word)}
-                      >
-                        <PencilIcon />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Supprimer ${word.korean}`}
-                        disabled={deleting === word.id}
-                        onClick={() => remove(word)}
-                      >
-                        <TrashIcon />
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {editable && (
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Modifier ${word.korean}`}
+                          onClick={() => setEditing(word)}
+                        >
+                          <PencilIcon />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Supprimer ${word.korean}`}
+                          disabled={deleting === word.id}
+                          onClick={() => remove(word)}
+                        >
+                          <TrashIcon />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

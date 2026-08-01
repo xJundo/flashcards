@@ -54,7 +54,13 @@ import { toast } from "@/components/ui/toast"
 import { api, formatDate } from "@/lib/api"
 import type { CourseSummary } from "@/lib/types"
 
-export function CourseList({ courses }: { courses: CourseSummary[] }) {
+export function CourseList({
+  courses,
+  signedIn,
+}: {
+  courses: CourseSummary[]
+  signedIn: boolean
+}) {
   const router = useRouter()
   const [pendingDelete, setPendingDelete] =
     React.useState<CourseSummary | null>(null)
@@ -79,27 +85,33 @@ export function CourseList({ courses }: { courses: CourseSummary[] }) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Mes cours</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Les cours</h1>
           <p className="text-sm text-muted-foreground">
             {courses.length === 0
               ? "Aucun cours pour l'instant."
               : `${courses.length} cours · ${courses.reduce((total, course) => total + course.wordCount, 0)} mots`}
           </p>
         </div>
-        <div className="flex gap-2">
-          <ImportDialog>
-            <Button variant="outline">
-              <UploadIcon data-icon="inline-start" />
-              Importer
-            </Button>
-          </ImportDialog>
-          <CourseFormDialog>
-            <Button>
-              <PlusIcon data-icon="inline-start" />
-              Nouveau cours
-            </Button>
-          </CourseFormDialog>
-        </div>
+        {signedIn ? (
+          <div className="flex gap-2">
+            <ImportDialog>
+              <Button variant="outline">
+                <UploadIcon data-icon="inline-start" />
+                Importer
+              </Button>
+            </ImportDialog>
+            <CourseFormDialog>
+              <Button>
+                <PlusIcon data-icon="inline-start" />
+                Nouveau cours
+              </Button>
+            </CourseFormDialog>
+          </div>
+        ) : (
+          <Button render={<Link href="/inscription" />}>
+            Créer un compte pour publier
+          </Button>
+        )}
       </div>
 
       {courses.length === 0 ? (
@@ -108,19 +120,26 @@ export function CourseList({ courses }: { courses: CourseSummary[] }) {
             <EmptyMedia variant="icon">
               <BookOpenIcon />
             </EmptyMedia>
-            <EmptyTitle>Commence par importer un cours</EmptyTitle>
+            <EmptyTitle>Aucun cours publié</EmptyTitle>
             <EmptyDescription>
-              Colle le JSON de tes notes (mot / prononciation / traduction), ou
-              directement le texte brut copié depuis Google Docs.
+              {signedIn
+                ? "Colle le JSON de tes notes (mot / prononciation / traduction), ou directement le texte brut copié depuis Google Docs."
+                : "Crée un compte pour publier tes propres cours."}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <ImportDialog>
-              <Button>
-                <UploadIcon data-icon="inline-start" />
-                Importer des notes
+            {signedIn ? (
+              <ImportDialog>
+                <Button>
+                  <UploadIcon data-icon="inline-start" />
+                  Importer des notes
+                </Button>
+              </ImportDialog>
+            ) : (
+              <Button render={<Link href="/inscription" />}>
+                Créer un compte
               </Button>
-            </ImportDialog>
+            )}
           </EmptyContent>
         </Empty>
       ) : (
@@ -131,7 +150,10 @@ export function CourseList({ courses }: { courses: CourseSummary[] }) {
               className="group relative transition-colors hover:border-ring"
             >
               <CardHeader>
-                <CardDescription>{formatDate(course.date)}</CardDescription>
+                <CardDescription>
+                  {formatDate(course.date)}
+                  {course.owner && <> · {course.owner.name}</>}
+                </CardDescription>
                 <CardTitle className="text-base">
                   <Link
                     href={`/courses/${course.id}`}
@@ -156,12 +178,14 @@ export function CourseList({ courses }: { courses: CourseSummary[] }) {
                     />
                     <DropdownMenuContent align="end">
                       <DropdownMenuGroup>
-                        <CourseFormDialog course={course}>
-                          <DropdownMenuItem closeOnClick={false}>
-                            <PencilIcon />
-                            Renommer / redater
-                          </DropdownMenuItem>
-                        </CourseFormDialog>
+                        {course.editable && (
+                          <CourseFormDialog course={course}>
+                            <DropdownMenuItem closeOnClick={false}>
+                              <PencilIcon />
+                              Renommer / redater
+                            </DropdownMenuItem>
+                          </CourseFormDialog>
+                        )}
                         <DropdownMenuItem
                           render={
                             <a
@@ -173,13 +197,15 @@ export function CourseList({ courses }: { courses: CourseSummary[] }) {
                             </a>
                           }
                         />
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => setPendingDelete(course)}
-                        >
-                          <TrashIcon />
-                          Supprimer
-                        </DropdownMenuItem>
+                        {course.editable && (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setPendingDelete(course)}
+                          >
+                            <TrashIcon />
+                            Supprimer
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -204,7 +230,7 @@ export function CourseList({ courses }: { courses: CourseSummary[] }) {
             <AlertDialogTitle>Supprimer ce cours ?</AlertDialogTitle>
             <AlertDialogDescription>
               « {pendingDelete?.title} » et ses {pendingDelete?.wordCount} mots
-              seront supprimés définitivement du disque.
+              seront supprimés définitivement.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

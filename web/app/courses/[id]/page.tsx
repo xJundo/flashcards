@@ -1,14 +1,21 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeftIcon, DownloadIcon, PencilIcon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  DownloadIcon,
+  PencilIcon,
+  UsersIcon,
+} from "lucide-react"
 
 import { CourseFormDialog } from "@/components/course-form-dialog"
 import { FlashcardDeck } from "@/components/flashcard-deck"
+import { ShareDialog } from "@/components/share-dialog"
 import { WordTable } from "@/components/word-table"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { formatDate } from "@/lib/api"
-import { getCourse } from "@/lib/store"
+import { currentUser } from "@/lib/session"
+import { canWrite, getCourse } from "@/lib/store"
 
 export const dynamic = "force-dynamic"
 
@@ -24,8 +31,11 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function CoursePage({ params }: Props) {
   const { id } = await params
-  const course = await getCourse(id)
+  const [course, user] = await Promise.all([getCourse(id), currentUser()])
   if (!course) notFound()
+
+  const editable = await canWrite(course.id, user?.id)
+  const owns = Boolean(user && course.owner?.id === user.id)
 
   return (
     <div className="flex flex-col gap-8">
@@ -43,6 +53,7 @@ export default async function CoursePage({ params }: Props) {
           <div className="flex flex-col gap-1">
             <p className="text-sm text-muted-foreground">
               {formatDate(course.date)}
+              {course.owner && <> · publié par {course.owner.name}</>}
             </p>
             <h1 className="text-2xl font-semibold tracking-tight">
               {course.title}
@@ -56,21 +67,39 @@ export default async function CoursePage({ params }: Props) {
               <DownloadIcon data-icon="inline-start" />
               Exporter
             </Button>
-            <CourseFormDialog
-              course={{ id: course.id, title: course.title, date: course.date }}
-            >
-              <Button variant="outline">
-                <PencilIcon data-icon="inline-start" />
-                Modifier
-              </Button>
-            </CourseFormDialog>
+            {owns && (
+              <ShareDialog courseId={course.id} owner={course.owner}>
+                <Button variant="outline">
+                  <UsersIcon data-icon="inline-start" />
+                  Partager
+                </Button>
+              </ShareDialog>
+            )}
+            {editable && (
+              <CourseFormDialog
+                course={{
+                  id: course.id,
+                  title: course.title,
+                  date: course.date,
+                }}
+              >
+                <Button variant="outline">
+                  <PencilIcon data-icon="inline-start" />
+                  Modifier
+                </Button>
+              </CourseFormDialog>
+            )}
           </div>
         </div>
       </div>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold tracking-tight">Flashcards</h2>
-        <FlashcardDeck words={course.words} />
+        <FlashcardDeck
+          courseId={course.id}
+          words={course.words}
+          signedIn={Boolean(user)}
+        />
       </section>
 
       <Separator />
@@ -85,7 +114,11 @@ export default async function CoursePage({ params }: Props) {
             l&apos;ordre de la note.
           </p>
         </div>
-        <WordTable courseId={course.id} words={course.words} />
+        <WordTable
+          courseId={course.id}
+          words={course.words}
+          editable={editable}
+        />
       </section>
     </div>
   )

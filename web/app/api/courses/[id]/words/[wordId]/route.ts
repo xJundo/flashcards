@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { requireWriteAccess } from "@/lib/guard"
 import { updateCourse } from "@/lib/store"
 import type { Word } from "@/lib/types"
 
@@ -9,6 +10,9 @@ type Params = { params: Promise<{ id: string; wordId: string }> }
 
 export async function PATCH(request: Request, { params }: Params) {
   const { id, wordId } = await params
+  const access = await requireWriteAccess(id)
+  if ("denied" in access) return access.denied
+
   const body = (await request.json().catch(() => ({}))) as Partial<Word>
 
   let found = false
@@ -38,6 +42,8 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(_request: Request, { params }: Params) {
   const { id, wordId } = await params
+  const access = await requireWriteAccess(id)
+  if ("denied" in access) return access.denied
 
   let found = false
   const course = await updateCourse(id, (current) => {

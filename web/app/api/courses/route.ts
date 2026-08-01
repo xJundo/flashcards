@@ -2,10 +2,12 @@ import { NextResponse } from "next/server"
 
 import { normalizeImportedCourses, toCourse, today } from "@/lib/normalize"
 import { parseNotes } from "@/lib/parse-notes"
+import { currentUser } from "@/lib/session"
 import { listCourses, saveCourse } from "@/lib/store"
 
 export const dynamic = "force-dynamic"
 
+/** Lessons are readable by anyone, signed in or not. */
 export async function GET() {
   return NextResponse.json(await listCourses())
 }
@@ -19,6 +21,14 @@ type CreateBody = {
 }
 
 export async function POST(request: Request) {
+  const author = await currentUser()
+  if (!author) {
+    return NextResponse.json(
+      { error: "Connecte-toi pour créer un cours." },
+      { status: 401 }
+    )
+  }
+
   let body: CreateBody
   try {
     body = await request.json()
@@ -48,7 +58,8 @@ export async function POST(request: Request) {
           date: body.date?.trim() || parsed.date,
         },
         fallbackTitle
-      )
+      ),
+      author.id
     )
     return NextResponse.json(
       { courses: [course], skipped: parsed.skipped },
@@ -97,7 +108,8 @@ export async function POST(request: Request) {
             parsedCourses.length === 1
               ? fallbackTitle
               : `${fallbackTitle} (${index + 1})`
-          )
+          ),
+          author.id
         )
       )
     }
@@ -106,7 +118,8 @@ export async function POST(request: Request) {
 
   // No payload: an empty lesson to fill in by hand.
   const course = await saveCourse(
-    toCourse({ title: body.title, date: body.date, words: [] }, fallbackTitle)
+    toCourse({ title: body.title, date: body.date, words: [] }, fallbackTitle),
+    author.id
   )
   return NextResponse.json({ courses: [course] }, { status: 201 })
 }

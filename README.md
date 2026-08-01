@@ -5,30 +5,66 @@ Google Docs, page d'accueil listant les cours par date, flashcards avec mode
 apprentissage et prononciation audio, et la liste brute des mots sous les cartes.
 
 - **Stack** : Next.js 16 (App Router) + shadcn/ui (Base UI) + Tailwind v4
-- **Stockage** : un fichier JSON par cours, dans un volume Docker — pas de base de
-  données à administrer, et les notes restent lisibles/éditables à la main
+- **Base de données** : PostgreSQL, accédée via Drizzle
+- **Comptes** : better-auth (email + mot de passe), inscription ouverte à tous
 - **Déploiement** : Docker Compose, prêt pour Coolify
+
+## Comptes et droits
+
+- **Lecture publique** : n'importe qui, même sans compte, consulte les cours et
+  révise. Rien n'est enregistré tant qu'on n'est pas connecté.
+- **Publier** demande un compte. Chaque cours affiche le **pseudo** de son auteur ;
+  l'email ne sert qu'à se connecter et n'est jamais montré.
+- **Modifier** un cours est réservé à son auteur et aux comptes qu'il a cochés dans
+  **Partager** (par pseudo, ou en tapant l'email d'un compte existant).
+- **La progression est privée** : mots à revoir et historique des séries sont
+  rattachés au compte, invisibles aux autres, et te suivent d'un appareil à l'autre.
 
 ## Démarrage local
 
 ```bash
 cd web
 npm install
-npm run dev        # http://localhost:3000
+cp .env.example .env.local     # puis renseigne les valeurs
+npm run dev                    # http://localhost:3000
 ```
 
-Les cours sont écrits dans `web/data/courses/*.json`. Pour changer d'emplacement :
-`DATA_DIR=/chemin/vers/data npm run dev`.
+Il faut un PostgreSQL joignable. Le plus simple :
+
+```bash
+docker run -d --name flashcards-db -p 5433:5432 \
+  -e POSTGRES_USER=flashcards -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=flashcards \
+  postgres:18-alpine
+```
+
+Les migrations s'appliquent toutes seules au démarrage de l'app (`instrumentation.ts`).
+Pour les jouer à la main : `npx drizzle-kit migrate`. Après un changement de schéma
+dans `web/lib/db/schema.ts` : `npx drizzle-kit generate --name ma_migration`.
+
+### Variables d'environnement
+
+| Variable             | Rôle                                                      |
+| -------------------- | --------------------------------------------------------- |
+| `DATABASE_URL`       | Connexion PostgreSQL                                       |
+| `BETTER_AUTH_SECRET` | Signe les cookies de session — la changer déconnecte tout le monde |
+| `BETTER_AUTH_URL`    | URL publique de l'app (cookies, redirections)             |
+
+En prod, `docker-compose.yml` attend en plus `POSTGRES_PASSWORD` (et accepte
+`POSTGRES_USER` / `POSTGRES_DB` / `PORT`).
 
 ## Déploiement (Coolify sur Hostinger)
 
 1. Pousse ce dépôt sur GitHub/GitLab.
 2. Dans Coolify : **New Resource → Docker Compose**, pointe sur le dépôt, chemin du
    compose `docker-compose.yml`.
-3. Déploie, puis attache ton domaine au service `web` (port interne `3000`).
+3. Renseigne les variables d'environnement : `POSTGRES_PASSWORD`,
+   `BETTER_AUTH_SECRET` (au moins 32 caractères aléatoires — `openssl rand -base64 32`)
+   et `BETTER_AUTH_URL` avec ton domaine en `https://`.
+4. Déploie, puis attache ton domaine au service `web` (port interne `3000`).
 
-Le volume `flashcards-data` est monté sur `/data` : il survit aux redéploiements.
-Toutes tes notes y vivent, donc c'est le seul chemin à sauvegarder.
+Le volume `flashcards-db` porte toute la base — cours, comptes et progression. C'est
+le seul chemin à sauvegarder, et il survit aux redéploiements. Attention : supprimer
+puis recréer la ressource dans Coolify repart sur un volume vide.
 
 En local, la même commande :
 
@@ -41,10 +77,10 @@ PORT=8080 docker compose up -d     # ou sur un autre port
 
 ```bash
 # Sauvegarde
-docker compose cp web:/data/courses ./backup-courses
+docker compose exec -T db pg_dump -U flashcards flashcards > backup.sql
 
 # Restauration
-docker compose cp ./backup-courses/. web:/data/courses
+docker compose exec -T db psql -U flashcards -d flashcards < backup.sql
 ```
 
 ## Importer les notes Google Docs
@@ -78,6 +114,14 @@ node scripts/import-notes.mjs mes-notes.txt --title "Leçon 3" --date 2026-03-04
 
 L'URL par défaut est `http://localhost:3000`, surchargeable via `--url` ou la
 variable d'environnement `FLASHCARDS_URL`.
+
+Créer un cours demandant un compte, le script a besoin d'une session : copie le
+cookie d'un navigateur connecté (devtools → Application → Cookies) dans
+`FLASHCARDS_COOKIE`.
+
+```bash
+FLASHCARDS_COOKIE='better-auth.session_token=…' node scripts/import-notes.mjs notes.txt
+```
 
 ### 3. En passant par ChatGPT
 
@@ -154,13 +198,28 @@ Options de la session :
   pour une écoute pure.
 - **Mélanger / Ordre du cours** : ordre de passage des cartes.
 - **Audio auto** : joue la prononciation dès que la face coréenne apparaît.
-- Chaque carte est marquée **Su** ou **À revoir**. En fin de session, un récapitulatif
+- Chaque carte est marquée **Acquis** ou **À revoir**. En fin de série, un récapitulatif
   permet de **rejouer uniquement les échecs**.
 
 Ces préférences sont mémorisées dans le navigateur.
 
-Raccourcis clavier : `Espace` retourner · `←` à revoir · `→` su · `S` écouter ·
+Raccourcis clavier : `Espace` retourner · `←` à revoir · `→` acquis · `S` écouter ·
 `Retour arrière` carte précédente.
+
+### Suivi : à revoir et historique des séries
+
+La colonne de droite garde la trace du travail, série après série :
+
+- **À revoir** — tout mot raté en fin de série y atterrit automatiquement et y
+  reste jusqu'à ce que tu le repasses en acquis. Le bouton **Travailler ces N
+  mots** lance une série avec eux seuls ; l'icône ✓ retire un mot à la main, et
+  le haut-parleur le fait écouter.
+- **Séries** — le score de chaque série terminée (barre de réussite, `réussis /
+  total`, date), les plus récentes en haut.
+
+Ce suivi est rattaché à ton compte, en base : il te suit d'un appareil à l'autre et
+reste invisible aux autres. Sans compte, la révision fonctionne mais rien n'est
+enregistré.
 
 ## Audio coréen
 
@@ -173,9 +232,9 @@ comme une garantie de service.
 
 ## Ajouter des mots à la main
 
-Bouton **Ajouter un mot** sous la liste. Le mot est écrit immédiatement dans le
-JSON du cours (`/data/courses/<id>.json`), au même format que les mots importés.
-« Ajouter et continuer » garde la fenêtre ouverte pour enchaîner.
+Bouton **Ajouter un mot** sous la liste — visible seulement si tu as l'accès en
+écriture. Le mot est enregistré immédiatement en base, au même format que les mots
+importés. « Ajouter et continuer » garde la fenêtre ouverte pour enchaîner.
 
 Le bouton **Exporter** récupère le JSON complet d'un cours, prêt à être réimporté
 ailleurs ou versionné.
@@ -195,17 +254,32 @@ ailleurs ou versionné.
 | `DELETE` | `/api/courses/:id/words/:wordId`     | Supprimer un mot                         |
 | `POST`   | `/api/parse`                         | Aperçu d'un import, sans écriture        |
 | `GET`    | `/api/tts?text=…`                    | Audio coréen (repli serveur)             |
+| `GET`    | `/api/courses/:id/editors`           | Qui peut écrire + comptes existants (auteur seul) |
+| `POST`   | `/api/courses/:id/editors`           | Retrouver un compte par email (auteur seul) |
+| `PUT`    | `/api/courses/:id/editors`           | Remplacer la liste des accès (auteur seul) |
+| `GET`    | `/api/courses/:id/progress`          | Ma progression sur ce cours              |
+| `POST`   | `/api/courses/:id/progress`          | Enregistrer une série, ou marquer un mot acquis |
+| `*`      | `/api/auth/*`                        | Inscription, connexion, session (better-auth) |
+
+Les routes de lecture sont ouvertes ; toute écriture sur un cours exige d'en être
+l'auteur ou d'y avoir été invité (`401` sans compte, `403` sans les droits).
 
 ## Structure
 
 ```
-docker-compose.yml          # service unique + volume de données
+docker-compose.yml          # web + postgres, avec le volume de la base
 scripts/import-notes.mjs    # import d'un fichier depuis la ligne de commande
 examples/                   # exemples de notes brutes et de JSON
 web/                        # l'application Next.js
   app/                      # pages et routes API
   components/               # UI (shadcn/ui) et composants métier
-  lib/store.ts              # lecture/écriture des JSON de cours
+  drizzle/                  # migrations SQL, jouées au démarrage
+  instrumentation.ts        # applique les migrations au boot du serveur
+  lib/db/schema.ts          # le schéma : comptes, cours, mots, accès, progression
+  lib/store.ts              # requêtes des cours + règles de droits
+  lib/progress-store.ts     # progression par compte
+  lib/auth.ts               # configuration better-auth
+  lib/guard.ts              # garde d'écriture partagée par les routes API
   lib/parse-notes.ts        # parseur des notes en texte brut
   lib/normalize.ts          # tolérance sur les noms de champs à l'import
   hooks/use-korean-speech.ts

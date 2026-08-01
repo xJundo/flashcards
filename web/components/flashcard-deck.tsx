@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   CheckIcon,
   RepeatIcon,
@@ -27,8 +28,9 @@ import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { useKoreanSpeech } from "@/hooks/use-korean-speech"
 import { shuffle } from "@/lib/api"
+import { useProgress } from "@/lib/progress"
 import { cn } from "@/lib/utils"
-import type { FrontSide, Word } from "@/lib/types"
+import type { FrontSide, RunResult, Word } from "@/lib/types"
 
 const SETTINGS_KEY = "flashcards:settings"
 
@@ -123,13 +125,23 @@ function buildDeck(
   }))
 }
 
-export function FlashcardDeck({ words }: { words: Word[] }) {
+export function FlashcardDeck({
+  courseId,
+  words,
+  signedIn,
+}: {
+  courseId: string
+  words: Word[]
+  /** Progress is only recorded for an account; anonymous revision is untracked. */
+  signedIn: boolean
+}) {
   const { speak } = useKoreanSpeech()
   const settings = React.useSyncExternalStore(
     settingsStore.subscribe,
     settingsStore.get,
     settingsStore.getServer
   )
+  const { progress, send } = useProgress(courseId, signedIn)
   const [run, setRun] = React.useState<Run>(EMPTY_RUN)
   /** Bumped by "Mélanger" / "Recommencer" to force a fresh draw. */
   const [runId, setRunId] = React.useState(0)
@@ -165,6 +177,31 @@ export function FlashcardDeck({ words }: { words: Word[] }) {
     [deck, verdicts]
   )
   const known = answered - failed.length
+
+  /** The words still flagged, in the order of the lesson rather than of the runs. */
+  const review = React.useMemo(() => {
+    const flagged = new Set(progress.review)
+    return words.filter((word) => flagged.has(word.id))
+  }, [progress.review, words])
+
+  // A finished run is written once: the ref survives the StrictMode double
+  // effect, and is cleared when a new deck is drawn.
+  const recorded = React.useRef(false)
+  React.useEffect(() => {
+    recorded.current = false
+  }, [deck])
+  React.useEffect(() => {
+    if (!finished || recorded.current) return
+    recorded.current = true
+    void send({
+      run: {
+        failed: failed.map((word) => word.id),
+        known: deck
+          .filter((card) => verdicts[card.word.id] === "known")
+          .map((card) => card.word.id),
+      },
+    })
+  }, [deck, failed, finished, send, verdicts])
 
   // An `audio` front hides the word, so its back is the Korean side too.
   const backSide: Side = current?.front === "korean" ? "translation" : "korean"
@@ -263,182 +300,346 @@ export function FlashcardDeck({ words }: { words: Word[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <ToggleGroup
-          value={[frontSide]}
-          onValueChange={(value) => {
-            const next = (value[0] as FrontSide | undefined) ?? frontSide
-            settingsStore.set({ ...settings, frontSide: next })
-          }}
-          variant="outline"
-          spacing={0}
-          aria-label="Face visible en premier"
-        >
-          <ToggleGroupItem value="korean">Coréen</ToggleGroupItem>
-          <ToggleGroupItem value="translation">Français</ToggleGroupItem>
-          <ToggleGroupItem value="random">Aléatoire</ToggleGroupItem>
-          <ToggleGroupItem value="audio">Écoute</ToggleGroupItem>
-        </ToggleGroup>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="romanization"
-              checked={romanization}
-              onCheckedChange={(checked) =>
-                settingsStore.set({ ...settings, romanization: checked })
-              }
-            />
-            <Label
-              htmlFor="romanization"
-              className="text-sm text-muted-foreground"
-            >
-              Prononciation
-            </Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              id="autoplay"
-              checked={autoplay}
-              onCheckedChange={(checked) =>
-                settingsStore.set({ ...settings, autoplay: checked })
-              }
-            />
-            <Label htmlFor="autoplay" className="text-sm text-muted-foreground">
-              Audio auto
-            </Label>
-          </div>
-          <Button
-            variant={shuffled ? "secondary" : "outline"}
-            onClick={() => {
-              settingsStore.set({ ...settings, shuffled: true })
-              // Already shuffled? Force a new draw anyway.
-              setRunId((value) => value + 1)
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <ToggleGroup
+            value={[frontSide]}
+            onValueChange={(value) => {
+              const next = (value[0] as FrontSide | undefined) ?? frontSide
+              settingsStore.set({ ...settings, frontSide: next })
             }}
-          >
-            <ShuffleIcon data-icon="inline-start" />
-            Mélanger
-          </Button>
-          <Button
             variant="outline"
-            onClick={() => settingsStore.set({ ...settings, shuffled: false })}
+            spacing={0}
+            aria-label="Face visible en premier"
           >
-            <RotateCcwIcon data-icon="inline-start" />
-            Ordre du cours
-          </Button>
+            <ToggleGroupItem value="korean">Coréen</ToggleGroupItem>
+            <ToggleGroupItem value="translation">Français</ToggleGroupItem>
+            <ToggleGroupItem value="random">Aléatoire</ToggleGroupItem>
+            <ToggleGroupItem value="audio">Écoute</ToggleGroupItem>
+          </ToggleGroup>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="romanization"
+                checked={romanization}
+                onCheckedChange={(checked) =>
+                  settingsStore.set({ ...settings, romanization: checked })
+                }
+              />
+              <Label
+                htmlFor="romanization"
+                className="text-sm text-muted-foreground"
+              >
+                Prononciation
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="autoplay"
+                checked={autoplay}
+                onCheckedChange={(checked) =>
+                  settingsStore.set({ ...settings, autoplay: checked })
+                }
+              />
+              <Label
+                htmlFor="autoplay"
+                className="text-sm text-muted-foreground"
+              >
+                Audio auto
+              </Label>
+            </div>
+            <Button
+              variant={shuffled ? "secondary" : "outline"}
+              onClick={() => {
+                settingsStore.set({ ...settings, shuffled: true })
+                // Already shuffled? Force a new draw anyway.
+                setRunId((value) => value + 1)
+              }}
+            >
+              <ShuffleIcon data-icon="inline-start" />
+              Mélanger
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                settingsStore.set({ ...settings, shuffled: false })
+              }
+            >
+              <RotateCcwIcon data-icon="inline-start" />
+              Ordre du cours
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-3">
-        <Progress
-          value={(Math.min(index, deck.length) / deck.length) * 100}
-          className="flex-1"
-        />
-        <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
-          {Math.min(index + (finished ? 0 : 1), deck.length)} / {deck.length}
-        </span>
-      </div>
+        <div className="flex items-center gap-3">
+          <Progress
+            value={(Math.min(index, deck.length) / deck.length) * 100}
+            className="flex-1"
+          />
+          <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
+            {Math.min(index + (finished ? 0 : 1), deck.length)} / {deck.length}
+          </span>
+        </div>
 
-      {finished ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
-            <h3 className="text-xl font-semibold">Session terminée</h3>
-            <div className="flex gap-2">
-              <Badge>
-                {known} su{known > 1 ? "s" : ""}
-              </Badge>
-              <Badge variant="secondary">{failed.length} à revoir</Badge>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {failed.length > 0 && (
-                <Button onClick={() => restart(failed, settings)}>
-                  <RepeatIcon data-icon="inline-start" />
-                  Rejouer les {failed.length} échecs
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                onClick={() => setRunId((value) => value + 1)}
-              >
-                <RotateCcwIcon data-icon="inline-start" />
-                Recommencer tout
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        current && (
-          <>
-            <div className="[perspective:1200px]">
-              <button
-                type="button"
-                onClick={flip}
-                aria-label={flipped ? "Voir le recto" : "Voir le verso"}
-                className={cn(
-                  "relative block h-64 w-full rounded-xl transition-transform duration-500 [transform-style:preserve-3d] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none sm:h-72",
-                  flipped && "[transform:rotateY(180deg)]"
+        {finished ? (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+              <h3 className="text-xl font-semibold">Série terminée</h3>
+              <div className="flex gap-2">
+                <Badge>{known} acquis</Badge>
+                <Badge variant="secondary">{failed.length} à revoir</Badge>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                {failed.length > 0 && (
+                  <Button onClick={() => restart(failed, settings)}>
+                    <RepeatIcon data-icon="inline-start" />
+                    Rejouer les {failed.length} échecs
+                  </Button>
                 )}
-              >
-                <CardFace
-                  word={current.word}
-                  side={current.front}
-                  romanization={romanization}
-                  hint={
-                    current.front === "audio"
-                      ? "S pour réécouter · Espace pour retourner"
-                      : "Clique ou Espace pour retourner"
-                  }
-                />
-                <CardFace
-                  word={current.word}
-                  side={backSide}
-                  romanization={romanization}
-                  // Nothing was shown on an `audio` prompt, so the reveal
-                  // carries the meaning as well as the word.
-                  translation={current.front === "audio"}
-                  hint="← à revoir · su →"
-                  className="[transform:rotateY(180deg)]"
-                />
-              </button>
-            </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setRunId((value) => value + 1)}
+                >
+                  <RotateCcwIcon data-icon="inline-start" />
+                  Nouvelle série
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          current && (
+            <>
+              <div className="[perspective:1200px]">
+                <button
+                  type="button"
+                  onClick={flip}
+                  aria-label={flipped ? "Voir le recto" : "Voir le verso"}
+                  className={cn(
+                    "relative block h-64 w-full rounded-xl transition-transform duration-500 [transform-style:preserve-3d] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none sm:h-72",
+                    flipped && "[transform:rotateY(180deg)]"
+                  )}
+                >
+                  <CardFace
+                    word={current.word}
+                    side={current.front}
+                    romanization={romanization}
+                    hint={
+                      current.front === "audio"
+                        ? "S pour réécouter · Espace pour retourner"
+                        : "Clique ou Espace pour retourner"
+                    }
+                  />
+                  <CardFace
+                    word={current.word}
+                    side={backSide}
+                    romanization={romanization}
+                    // Nothing was shown on an `audio` prompt, so the reveal
+                    // carries the meaning as well as the word.
+                    translation={current.front === "audio"}
+                    hint="← à revoir · acquis →"
+                    className="[transform:rotateY(180deg)]"
+                  />
+                </button>
+              </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="lg"
-                className="flex-1 sm:flex-none"
-                onClick={() => answer("unknown")}
-              >
-                <XIcon data-icon="inline-start" />À revoir
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                aria-label="Écouter en coréen"
-                onClick={() => speak(current.word.korean)}
-              >
-                <Volume2Icon />
-              </Button>
-              <Button
-                size="lg"
-                className="flex-1 sm:flex-none"
-                onClick={() => answer("known")}
-              >
-                <CheckIcon data-icon="inline-start" />
-                Su
-              </Button>
-            </div>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1 sm:flex-none"
+                  onClick={() => answer("unknown")}
+                >
+                  <XIcon data-icon="inline-start" />À revoir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  aria-label="Écouter en coréen"
+                  onClick={() => speak(current.word.korean)}
+                >
+                  <Volume2Icon />
+                </Button>
+                <Button
+                  size="lg"
+                  className="flex-1 sm:flex-none"
+                  onClick={() => answer("known")}
+                >
+                  <CheckIcon data-icon="inline-start" />
+                  Acquis
+                </Button>
+              </div>
 
-            <p className="text-center text-xs text-muted-foreground">
-              Espace : retourner · ← : à revoir · → : su · S : écouter · Retour
-              arrière : carte précédente
-            </p>
+              <p className="text-center text-xs text-muted-foreground">
+                Espace : retourner · ← : à revoir · → : acquis · S : écouter ·
+                Retour arrière : carte précédente
+              </p>
+            </>
+          )
+        )}
+      </div>
+
+      {/* Nothing is recorded without an account, so the panels would stay
+          empty — the invitation takes their place. */}
+      <aside className="flex flex-col gap-4">
+        {signedIn ? (
+          <>
+            <ReviewList
+              words={review}
+              onStart={() => restart(review, settings)}
+              onSpeak={speak}
+              onClear={(id) => void send({ acquired: id })}
+            />
+            <RunHistory
+              runs={progress.runs}
+              onReset={() => void send({ clearRuns: true })}
+            />
           </>
-        )
-      )}
+        ) : (
+          <Card>
+            <CardContent className="text-sm text-pretty text-muted-foreground">
+              <Link href="/connexion" className="underline underline-offset-4">
+                Connecte-toi
+              </Link>{" "}
+              pour garder tes mots à revoir et le score de tes séries.
+            </CardContent>
+          </Card>
+        )}
+      </aside>
     </div>
   )
+}
+
+/** The words carried over from past runs, and a way to drill only those. */
+function ReviewList({
+  words,
+  onStart,
+  onSpeak,
+  onClear,
+}: {
+  words: Word[]
+  onStart: () => void
+  onSpeak: (text: string) => void
+  onClear: (id: string) => void
+}) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">À revoir</h3>
+          <Badge variant="secondary">{words.length}</Badge>
+        </div>
+        {words.length === 0 ? (
+          <p className="text-sm text-pretty text-muted-foreground">
+            Les mots ratés en fin de série arrivent ici, jusqu&apos;à ce que tu
+            les marques acquis.
+          </p>
+        ) : (
+          <>
+            <Button size="sm" onClick={onStart}>
+              <RepeatIcon data-icon="inline-start" />
+              Travailler ces {words.length} mots
+            </Button>
+            <ul className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+              {words.map((word) => (
+                <li
+                  key={word.id}
+                  className="flex items-center gap-1 rounded-md px-1 py-0.5 hover:bg-accent"
+                >
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-sm" lang="ko">
+                      {word.korean}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {word.translation}
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Écouter ${word.korean}`}
+                    onClick={() => onSpeak(word.korean)}
+                  >
+                    <Volume2Icon />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Marquer ${word.korean} comme acquis`}
+                    onClick={() => onClear(word.id)}
+                  >
+                    <CheckIcon />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+/** Score of each finished series, newest first. */
+function RunHistory({
+  runs,
+  onReset,
+}: {
+  runs: RunResult[]
+  onReset: () => void
+}) {
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">Séries</h3>
+          {runs.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={onReset}>
+              Effacer
+            </Button>
+          )}
+        </div>
+        {runs.length === 0 ? (
+          <p className="text-sm text-pretty text-muted-foreground">
+            Termine une série pour voir ton score apparaître ici.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {runs.map((run) => {
+              const percent = Math.round((run.known / run.total) * 100)
+              return (
+                <li key={run.at} className="flex flex-col gap-1">
+                  <div className="flex items-baseline justify-between gap-2 text-sm">
+                    <span className="font-medium tabular-nums">{percent}%</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {run.known} / {run.total}
+                    </span>
+                  </div>
+                  <Progress value={percent} className="h-1.5" />
+                  <span className="text-xs text-muted-foreground">
+                    {formatRunDate(run.at)}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function formatRunDate(iso: string): string {
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleString("fr-FR", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
 }
 
 const FACE_LABEL: Record<Side, string> = {

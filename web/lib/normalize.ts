@@ -61,6 +61,13 @@ export function makeId(): string {
   return globalThis.crypto.randomUUID()
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Ids are database keys, so anything that isn't a UUID is rejected outright. */
+export function isId(value: unknown): value is string {
+  return typeof value === "string" && UUID.test(value)
+}
+
 /**
  * Field names only have to match down to case, accents and separators, so
  * `note_additionnelle`, `Note additionnelle` and `note-additionnelle` are the
@@ -126,7 +133,8 @@ export function normalizeWord(input: unknown): Word | null {
   const note = pickAll(source, NOTE_KEYS).join(" · ")
   if (!korean && !translation) return null
 
-  const id = typeof source.id === "string" && source.id ? source.id : makeId()
+  // An imported file may carry ids from elsewhere; only a real UUID is kept.
+  const id = isId(source.id) ? source.id : makeId()
   return { id, korean, romanization, translation, ...(note ? { note } : {}) }
 }
 
@@ -249,7 +257,11 @@ function isCourseLike(input: unknown): boolean {
   )
 }
 
-export function toCourse(parsed: ParsedImport, fallbackTitle: string): Course {
+/** The author is attached when the lesson is stored, not when it is parsed. */
+export function toCourse(
+  parsed: ParsedImport,
+  fallbackTitle: string
+): Omit<Course, "owner"> {
   const now = new Date().toISOString()
   return {
     id: makeId(),
