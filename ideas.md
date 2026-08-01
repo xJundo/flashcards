@@ -12,4 +12,5 @@
 7. compte admin
 8. faire une page de profile ou tu peux mettre un gif ou photo + langues d'intérêt et les profs auxquels t'es abonné.
 9. intégrer deepseek pour la création de cours (ou un truc du genre) pour que les profs puissent créer des cours plus facilement (notes additionnelles, traduction automatique, etc).
-10. 
+
+
