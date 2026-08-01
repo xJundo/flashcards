@@ -8,3 +8,8 @@
    4. l'élève peut mettre sa prononciation sur les trucs pour que le prof puisse corriger / noter la prononciation.
    5. l'élève peut poser des questions sur des mots en particuliers (ça envoie une notfi au prof, et ils peuvent en discuter dans un chat lié au cours / au mot. En gros, soit c'est une conv de cours, et du coup il peut mentionner les mots (cliquables et en surbrillance), soit c'est une conv par mot).
 5. Etendre le concept à d'autres langues que coréen francais.
+6. reset un mdp
+7. compte admin
+8. faire une page de profile ou tu peux mettre un gif ou photo + langues d'intérêt et les profs auxquels t'es abonné.
+9. intégrer deepseek pour la création de cours (ou un truc du genre) pour que les profs puissent créer des cours plus facilement (notes additionnelles, traduction automatique, etc).
+10. 

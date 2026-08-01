@@ -438,6 +438,9 @@ export function FlashcardDeck({
                     // Nothing was shown on an `audio` prompt, so the reveal
                     // carries the meaning as well as the word.
                     translation={current.front === "audio"}
+                    // The note is the answer to the prompt, so it only
+                    // belongs on the flipped face.
+                    note
                     hint="← à revoir · acquis →"
                     className="[transform:rotateY(180deg)]"
                   />
@@ -653,6 +656,7 @@ function CardFace({
   side,
   romanization,
   translation = false,
+  note = false,
   hint,
   className,
 }: {
@@ -661,6 +665,8 @@ function CardFace({
   romanization: boolean
   /** Adds the French meaning under a Korean face. */
   translation?: boolean
+  /** Shows the additional note — only on the flipped face. */
+  note?: boolean
   hint: string
   className?: string
 }) {
@@ -695,8 +701,7 @@ function CardFace({
           {word.translation}
         </p>
       )}
-      {/* The note often spells the word out, so it stays hidden on the prompt. */}
-      {side !== "audio" && word.note && (
+      {note && word.note && (
         <p className="max-w-prose text-center text-sm text-pretty text-muted-foreground">
           {word.note}
         </p>
