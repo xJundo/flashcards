@@ -20,9 +20,11 @@ services:
     build:
       context: ./web
       dockerfile: Dockerfile
-    # Coolify injects its own proxy; the published port is only for local runs.
-    ports:
-      - "${PORT:-3000}:3000"
+    # Coolify's proxy reaches the container over the internal Docker network,
+    # so no host port needs to be published — publishing one risks colliding
+    # with any other container on the VPS that has already claimed it.
+    expose:
+      - "3000"
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://${POSTGRES_USER:-flashcards}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-flashcards}

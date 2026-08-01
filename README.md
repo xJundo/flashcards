@@ -66,6 +66,12 @@ Le volume `flashcards-db` porte toute la base — cours, comptes et progression.
 le seul chemin à sauvegarder, et il survit aux redéploiements. Attention : supprimer
 puis recréer la ressource dans Coolify repart sur un volume vide.
 
+`docker-compose.yml` ne publie pas de port sur l'hôte : le proxy de Coolify parle au
+conteneur via le réseau Docker interne, donc rien à publier — et rien qui puisse
+entrer en conflit avec un autre conteneur du VPS. `docker-compose.override.yml`
+rajoute ce port pour les lancements en local uniquement (Coolify n'utilise que
+`docker-compose.yml`, jamais l'override).
+
 En local, la même commande :
 
 ```bash

@@ -1,0 +1,7 @@
+# Picked up automatically by `docker compose up` for local runs — Coolify
+# only applies docker-compose.yml, so this never reaches the VPS and can't
+# collide with another container's host port there.
+services:
+  web:
+    ports:
+      - "${PORT:-3000}:3000"
