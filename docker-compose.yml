@@ -1,0 +1,18 @@
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    # Coolify injects its own proxy; the published port is only for local runs.
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      # Where the lesson JSON files live inside the container.
+      DATA_DIR: /data
+      NODE_ENV: production
+    volumes:
+      - flashcards-data:/data
+    restart: unless-stopped
+
+volumes:
+  flashcards-data:

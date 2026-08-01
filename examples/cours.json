@@ -1,0 +1,27 @@
+{
+  "title": "Leçon 1 : les salutations",
+  "date": "2026-02-11",
+  "words": [
+    { "mot": "안녕하세요", "prononciation": "annyeonghaseyo", "traduction": "bonjour" },
+    { "mot": "감사합니다", "prononciation": "gamsahamnida", "traduction": "merci" },
+    { "mot": "죄송합니다", "prononciation": "joesonghamnida", "traduction": "je suis désolé" },
+    {
+      "mot": "안녕히 가세요",
+      "prononciation": "annyeonghi gaseyo",
+      "traduction": "au revoir",
+      "note": "à celui qui part"
+    },
+    {
+      "mot": "안녕히 계세요",
+      "prononciation": "annyeonghi gyeseyo",
+      "traduction": "au revoir",
+      "note": "à celui qui reste"
+    },
+    {
+      "mot": "배",
+      "prononciation": "bae",
+      "traduction": "poire",
+      "note_additionnelle": "배 veut aussi dire « ventre » et « bateau » — le contexte tranche"
+    }
+  ]
+}
