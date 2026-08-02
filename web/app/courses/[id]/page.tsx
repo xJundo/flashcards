@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 
 import { CourseFormDialog } from "@/components/course-form-dialog"
-import { FlashcardDeck } from "@/components/flashcard-deck"
+import { CoursePractice } from "@/components/course-practice"
 import { ShareDialog } from "@/components/share-dialog"
 import { WordTable } from "@/components/word-table"
 import { Button } from "@/components/ui/button"
@@ -94,8 +94,8 @@ export default async function CoursePage({ params }: Props) {
       </div>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold tracking-tight">Flashcards</h2>
-        <FlashcardDeck
+        <h2 className="text-lg font-semibold tracking-tight">Réviser</h2>
+        <CoursePractice
           courseId={course.id}
           words={course.words}
           signedIn={Boolean(user)}

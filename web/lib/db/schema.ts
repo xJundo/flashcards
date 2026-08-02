@@ -143,9 +143,13 @@ export const courseEditors = pgTable(
 /*  Progress — per learner, never shared                                       */
 /* -------------------------------------------------------------------------- */
 
-/** A word the learner failed and has not since re-acquired. */
-export const reviewWords = pgTable(
-  "review_words",
+/**
+ * How a learner stands on one word: `streak` counts the series answered right
+ * in a row. `0` means the last answer was a miss — the word is due for review;
+ * `KNOWN_STREAK` or more means acquired. A word never answered has no row.
+ */
+export const wordProgress = pgTable(
+  "word_progress",
   {
     userId: text("user_id")
       .notNull()
@@ -156,15 +160,16 @@ export const reviewWords = pgTable(
     courseId: uuid("course_id")
       .notNull()
       .references(() => courses.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    streak: integer("streak").notNull().default(0),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.wordId] }),
-    index("review_words_course_idx").on(table.userId, table.courseId),
+    index("word_progress_course_idx").on(table.userId, table.courseId),
   ]
 )
 
-/** One finished series. */
+/** One series, complete or cut short. Free practice is never written here. */
 export const runs = pgTable(
   "runs",
   {
@@ -175,11 +180,33 @@ export const runs = pgTable(
     courseId: uuid("course_id")
       .notNull()
       .references(() => courses.id, { onDelete: "cascade" }),
-    known: integer("known").notNull(),
-    total: integer("total").notNull(),
+    /** Cards the deck held — larger than the answers when it was cut short. */
+    size: integer("size").notNull(),
+    /** `false` when the learner closed the series before the last card. */
+    completed: boolean("completed").notNull().default(true),
+    /** The face that was shown first, kept so a recap can be read in context. */
+    frontSide: text("front_side").notNull().default("korean"),
     finishedAt: timestamp("finished_at").defaultNow().notNull(),
   },
   (table) => [index("runs_course_idx").on(table.userId, table.courseId)]
+)
+
+/** One answered card of a series — what makes the recap possible. */
+export const runWords = pgTable(
+  "run_words",
+  {
+    runId: uuid("run_id")
+      .notNull()
+      .references(() => runs.id, { onDelete: "cascade" }),
+    wordId: uuid("word_id")
+      .notNull()
+      .references(() => words.id, { onDelete: "cascade" }),
+    /** `true` for "acquis", `false` for "à revoir". */
+    known: boolean("known").notNull(),
+    /** Rank in the deck, so the recap lists the words as they came up. */
+    position: integer("position").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.runId, table.wordId] })]
 )
 
 /* -------------------------------------------------------------------------- */

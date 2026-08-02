@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server"
 
 import {
-  clearReviewWord,
   clearRuns,
   getProgress,
+  markAcquired,
+  markForReview,
   recordRun,
 } from "@/lib/progress-store"
 import { currentUser } from "@/lib/session"
+import type { FrontSide } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
@@ -34,13 +36,23 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 type Body = {
-  /** A finished series. */
-  run?: { failed?: unknown; known?: unknown }
+  /** A series, finished or closed early. Free practice never sends one. */
+  run?: {
+    failed?: unknown
+    known?: unknown
+    size?: unknown
+    completed?: unknown
+    frontSide?: unknown
+  }
   /** Marking one word acquired from the review list. */
   acquired?: string
+  /** Sending one acquired word back to the review list. */
+  review?: string
   /** Wiping the series history. */
   clearRuns?: boolean
 }
+
+const FRONT_SIDES: FrontSide[] = ["korean", "translation", "random", "audio"]
 
 export async function POST(request: Request, { params }: Params) {
   const { id } = await params
@@ -55,15 +67,26 @@ export async function POST(request: Request, { params }: Params) {
       Array.isArray(value)
         ? value.filter((item): item is string => typeof item === "string")
         : []
+    const failed = ids(body.run.failed)
+    const known = ids(body.run.known)
+    const frontSide = FRONT_SIDES.find((side) => side === body.run?.frontSide)
+
     return NextResponse.json(
       await recordRun(userId, id, {
-        failed: ids(body.run.failed),
-        known: ids(body.run.known),
+        failed,
+        known,
+        size:
+          typeof body.run.size === "number" && Number.isFinite(body.run.size)
+            ? Math.trunc(body.run.size)
+            : failed.length + known.length,
+        completed: body.run.completed !== false,
+        frontSide: frontSide ?? "korean",
       })
     )
   }
 
-  if (body.acquired) await clearReviewWord(userId, body.acquired)
+  if (body.acquired) await markAcquired(userId, id, body.acquired)
+  if (body.review) await markForReview(userId, body.review)
   if (body.clearRuns) await clearRuns(userId, id)
 
   return NextResponse.json(await getProgress(userId, id))

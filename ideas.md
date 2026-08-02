@@ -18,3 +18,6 @@
 13. revoir les keybinds
 14. changer la voix par un vrai natif coréen ?
 15. version web mobile friendly (pas défiler sur le tableau des mots)
+16. ajouter des cours en favori
+17. avoir une page de stats pour voir son évolution (nombre de mots appris, nombre de cours suivis, etc).
+18. avoir une info comme quuoi qu'on a réussi le cours (ça peut etre genre 80% de réussite vis à vis du nombre de mots appris et ceux à revoir)

@@ -3,13 +3,22 @@
 import * as React from "react"
 
 import { api } from "@/lib/api"
-import type { Progress } from "@/lib/types"
+import type { FrontSide, Progress } from "@/lib/types"
 
-const EMPTY: Progress = { review: [], runs: [] }
+const EMPTY: Progress = { streaks: {}, runs: [] }
 
 type Action =
-  | { run: { failed: string[]; known: string[] } }
+  | {
+      run: {
+        failed: string[]
+        known: string[]
+        size: number
+        completed: boolean
+        frontSide: FrontSide
+      }
+    }
   | { acquired: string }
+  | { review: string }
   | { clearRuns: true }
 
 /**
