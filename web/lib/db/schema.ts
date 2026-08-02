@@ -147,6 +147,10 @@ export const courseEditors = pgTable(
  * How a learner stands on one word: `streak` counts the series answered right
  * in a row. `0` means the last answer was a miss — the word is due for review;
  * `KNOWN_STREAK` or more means acquired. A word never answered has no row.
+ *
+ * `hits` and `misses` are the lifetime tallies behind them. They live here
+ * rather than being counted from `run_words` because that history is capped
+ * and the learner may erase it — the counters have to outlive it.
  */
 export const wordProgress = pgTable(
   "word_progress",
@@ -161,6 +165,10 @@ export const wordProgress = pgTable(
       .notNull()
       .references(() => courses.id, { onDelete: "cascade" }),
     streak: integer("streak").notNull().default(0),
+    /** Times answered right, all series merged. */
+    hits: integer("hits").notNull().default(0),
+    /** Times the word landed in "à revoir", by a miss or by hand. */
+    misses: integer("misses").notNull().default(0),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [

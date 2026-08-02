@@ -29,6 +29,7 @@ import type {
   SeriesMode,
   Verdict,
   Word,
+  WordStat,
 } from "@/lib/types"
 
 /** A word plus the side decided for this run (resolved once, so flipping is stable). */
@@ -91,15 +92,15 @@ export function SeriesDialog({
   open,
   mode,
   words,
-  streaks,
+  stats,
   onOpenChange,
   onRecord,
 }: {
   open: boolean
   mode: SeriesMode
   words: Word[]
-  /** Consecutive successes per word id, to draw from a standing. */
-  streaks: Record<string, number>
+  /** Where each word stands, to draw a deck from one standing. */
+  stats: Record<string, WordStat>
   onOpenChange: (open: boolean) => void
   onRecord: (report: RunReport) => void
 }) {
@@ -116,10 +117,12 @@ export function SeriesDialog({
   const pools = React.useMemo(
     () => ({
       all: words,
-      todo: words.filter((word) => (streaks[word.id] ?? 0) < KNOWN_STREAK),
-      review: words.filter((word) => streaks[word.id] === 0),
+      todo: words.filter(
+        (word) => (stats[word.id]?.streak ?? 0) < KNOWN_STREAK
+      ),
+      review: words.filter((word) => stats[word.id]?.streak === 0),
     }),
-    [streaks, words]
+    [stats, words]
   )
 
   const source: DeckSource = pools[settings.source].length

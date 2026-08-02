@@ -10,7 +10,7 @@ import type { Progress, RunFront, RunResult } from "@/lib/types"
 
 const MAX_RUNS = 20
 
-const EMPTY: Progress = { streaks: {}, runs: [] }
+const EMPTY: Progress = { stats: {}, runs: [] }
 
 export type RunInput = {
   /** Ids answered right, in deck order. */
@@ -31,7 +31,12 @@ export async function getProgress(
 
   const [standings, history] = await Promise.all([
     db
-      .select({ wordId: wordProgress.wordId, streak: wordProgress.streak })
+      .select({
+        wordId: wordProgress.wordId,
+        streak: wordProgress.streak,
+        hits: wordProgress.hits,
+        misses: wordProgress.misses,
+      })
       .from(wordProgress)
       .where(
         and(
@@ -70,8 +75,11 @@ export async function getProgress(
   }
 
   return {
-    streaks: Object.fromEntries(
-      standings.map((row) => [row.wordId, row.streak])
+    stats: Object.fromEntries(
+      standings.map((row) => [
+        row.wordId,
+        { streak: row.streak, hits: row.hits, misses: row.misses },
+      ])
     ),
     runs: history.map((row): RunResult => {
       const answers = byRun.get(row.id) ?? { known: [], failed: [] }
@@ -162,11 +170,21 @@ export async function recordRun(
       await tx
         .insert(wordProgress)
         .values(
-          failed.map((wordId) => ({ userId, courseId, wordId, streak: 0 }))
+          failed.map((wordId) => ({
+            userId,
+            courseId,
+            wordId,
+            streak: 0,
+            misses: 1,
+          }))
         )
         .onConflictDoUpdate({
           target: [wordProgress.userId, wordProgress.wordId],
-          set: { streak: 0, updatedAt: new Date() },
+          set: {
+            streak: 0,
+            misses: sql`${wordProgress.misses} + 1`,
+            updatedAt: new Date(),
+          },
         })
     }
 
@@ -174,12 +192,19 @@ export async function recordRun(
       await tx
         .insert(wordProgress)
         .values(
-          known.map((wordId) => ({ userId, courseId, wordId, streak: 1 }))
+          known.map((wordId) => ({
+            userId,
+            courseId,
+            wordId,
+            streak: 1,
+            hits: 1,
+          }))
         )
         .onConflictDoUpdate({
           target: [wordProgress.userId, wordProgress.wordId],
           set: {
             streak: sql`${wordProgress.streak} + 1`,
+            hits: sql`${wordProgress.hits} + 1`,
             updatedAt: new Date(),
           },
         })
@@ -189,7 +214,10 @@ export async function recordRun(
   return getProgress(userId, courseId)
 }
 
-/** Marks a word acquired by hand, from the review list. */
+/**
+ * Marks a word acquired by hand, from the review list. The tallies are left
+ * alone: this is the learner overruling the count, not a series won.
+ */
 export async function markAcquired(
   userId: string,
   courseId: string,
@@ -212,7 +240,11 @@ export async function markAcquired(
     })
 }
 
-/** Sends an acquired word back to the review list, without touching history. */
+/**
+ * Sends an acquired word back to the review list, without touching history.
+ * It counts as a miss: the tally answers "how often did this word end up in
+ * à revoir", and a learner flagging it themselves is one of those times.
+ */
 export async function markForReview(
   userId: string,
   wordId: string
@@ -220,7 +252,11 @@ export async function markForReview(
   if (!isId(wordId)) return
   await db
     .update(wordProgress)
-    .set({ streak: 0, updatedAt: new Date() })
+    .set({
+      streak: 0,
+      misses: sql`${wordProgress.misses} + 1`,
+      updatedAt: new Date(),
+    })
     .where(
       and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId))
     )

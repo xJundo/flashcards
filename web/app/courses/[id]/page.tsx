@@ -14,6 +14,7 @@ import { WordTable } from "@/components/word-table"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { formatDate } from "@/lib/api"
+import { ProgressProvider } from "@/lib/progress"
 import { currentUser } from "@/lib/session"
 import { canWrite, getCourse } from "@/lib/store"
 
@@ -93,33 +94,34 @@ export default async function CoursePage({ params }: Props) {
         </div>
       </div>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold tracking-tight">Réviser</h2>
-        <CoursePractice
-          courseId={course.id}
-          words={course.words}
-          signedIn={Boolean(user)}
-        />
-      </section>
+      {/* Both sections read the same standings, so they share one copy of
+          them: a finished series recolours the word list on the spot. */}
+      <ProgressProvider courseId={course.id} signedIn={Boolean(user)}>
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold tracking-tight">Réviser</h2>
+          <CoursePractice words={course.words} signedIn={Boolean(user)} />
+        </section>
 
-      <Separator />
+        <Separator />
 
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold tracking-tight">
-            Tous les mots du cours
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {course.words.length} mot{course.words.length > 1 ? "s" : ""}, dans
-            l&apos;ordre de la note.
-          </p>
-        </div>
-        <WordTable
-          courseId={course.id}
-          words={course.words}
-          editable={editable}
-        />
-      </section>
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold tracking-tight">
+              Tous les mots du cours
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {course.words.length} mot{course.words.length > 1 ? "s" : ""},
+              dans l&apos;ordre de la note.
+            </p>
+          </div>
+          <WordTable
+            courseId={course.id}
+            words={course.words}
+            editable={editable}
+            tracked={Boolean(user)}
+          />
+        </section>
+      </ProgressProvider>
     </div>
   )
 }

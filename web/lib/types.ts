@@ -67,6 +67,18 @@ export function standingOf(streak: number | undefined): Standing | null {
   return streak >= KNOWN_STREAK ? "known" : "learning"
 }
 
+/** Everything recorded about one word, for one learner, on one lesson. */
+export type WordStat = {
+  /** Consecutive successes. `0` means the last answer was a miss. */
+  streak: number
+  /** Times answered right, all series merged. */
+  hits: number
+  /** Times the word landed in "à revoir", by a miss or by hand. */
+  misses: number
+}
+
+export const NO_STAT: WordStat = { streak: 0, hits: 0, misses: 0 }
+
 /**
  * The sense a series was played in. `mixed` is not a setting — it is what a
  * series becomes once the learner switches sides part-way through it.
@@ -91,11 +103,8 @@ export type RunResult = {
 
 /** A learner's standing on one lesson. Private, never shared between accounts. */
 export type Progress = {
-  /**
-   * Consecutive successes, per word id. `0` means the last answer was a miss,
-   * so the word is due for review; an absent id was never answered at all.
-   */
-  streaks: Record<string, number>
+  /** Per word id. An absent id was never answered at all. */
+  stats: Record<string, WordStat>
   /** Newest first. */
   runs: RunResult[]
 }

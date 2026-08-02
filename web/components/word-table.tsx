@@ -6,6 +6,12 @@ import { PencilIcon, PlusIcon, SearchIcon, TrashIcon } from "lucide-react"
 
 import { SpeakButton } from "@/components/speak-button"
 import { WordFormDialog } from "@/components/word-form-dialog"
+import {
+  STANDING,
+  StandingBadge,
+  StandingSummary,
+  standingKey,
+} from "@/components/word-standing"
 import { Button } from "@/components/ui/button"
 import {
   Empty,
@@ -25,19 +31,25 @@ import {
 } from "@/components/ui/table"
 import { toast } from "@/components/ui/toast"
 import { api } from "@/lib/api"
+import { useCourseProgress } from "@/lib/progress"
+import { cn } from "@/lib/utils"
 import type { Word } from "@/lib/types"
 
 export function WordTable({
   courseId,
   words,
   editable,
+  tracked,
 }: {
   courseId: string
   words: Word[]
   /** Read-only for visitors without write access on this lesson. */
   editable: boolean
+  /** Signed out, no word has a standing — the whole column would be empty. */
+  tracked: boolean
 }) {
   const router = useRouter()
+  const { progress } = useCourseProgress()
   const [query, setQuery] = React.useState("")
   const [editing, setEditing] = React.useState<Word | null>(null)
   const [deleting, setDeleting] = React.useState<string | null>(null)
@@ -118,7 +130,14 @@ export function WordTable({
           {/* Four columns never fit a phone, so a word becomes a block there. */}
           <ul className="flex flex-col divide-y rounded-xl border sm:hidden">
             {filtered.map((word) => (
-              <li key={word.id} className="flex items-start gap-2 p-3">
+              <li
+                key={word.id}
+                className={cn(
+                  "flex items-start gap-2 p-3",
+                  tracked &&
+                    `border-l-2 ${STANDING[standingKey(progress.stats[word.id])].edge}`
+                )}
+              >
                 <SpeakButton text={word.korean} size="icon" />
                 <div className="flex min-w-0 flex-1 flex-col">
                   <span lang="ko" className="font-medium break-words">
@@ -135,6 +154,12 @@ export function WordTable({
                   {word.note && (
                     <span className="mt-1 text-xs break-words text-muted-foreground">
                       {word.note}
+                    </span>
+                  )}
+                  {tracked && (
+                    <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <StandingBadge stat={progress.stats[word.id]} />
+                      <StandingSummary stat={progress.stats[word.id]} />
                     </span>
                   )}
                 </div>
@@ -170,9 +195,12 @@ export function WordTable({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12" />
-                  <TableHead className="w-[24%]">Coréen</TableHead>
-                  <TableHead className="w-[22%]">Prononciation</TableHead>
+                  <TableHead className="w-[22%]">Coréen</TableHead>
+                  <TableHead className="w-[18%]">Prononciation</TableHead>
                   <TableHead>Traduction</TableHead>
+                  {tracked && (
+                    <TableHead className="w-[22%]">Progression</TableHead>
+                  )}
                   {editable && (
                     <TableHead className="w-24 text-right">Actions</TableHead>
                   )}
@@ -181,7 +209,12 @@ export function WordTable({
               <TableBody>
                 {filtered.map((word) => (
                   <TableRow key={word.id}>
-                    <TableCell>
+                    <TableCell
+                      className={cn(
+                        tracked &&
+                          `border-l-2 ${STANDING[standingKey(progress.stats[word.id])].edge}`
+                      )}
+                    >
                       <SpeakButton text={word.korean} />
                     </TableCell>
                     <TableCell lang="ko" className="font-medium break-words">
@@ -198,6 +231,14 @@ export function WordTable({
                         </span>
                       )}
                     </TableCell>
+                    {tracked && (
+                      <TableCell>
+                        <div className="flex flex-col items-start gap-1">
+                          <StandingBadge stat={progress.stats[word.id]} />
+                          <StandingSummary stat={progress.stats[word.id]} />
+                        </div>
+                      </TableCell>
+                    )}
                     {editable && (
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">

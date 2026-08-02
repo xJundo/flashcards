@@ -14,6 +14,11 @@ import {
 
 import { SeriesDialog, type RunReport } from "@/components/series-dialog"
 import {
+  STANDING,
+  scoreKey,
+  type StandingKey,
+} from "@/components/word-standing"
+import {
   Accordion,
   AccordionItem,
   AccordionPanel,
@@ -24,8 +29,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { useKoreanSpeech } from "@/hooks/use-korean-speech"
-import { useProgress } from "@/lib/progress"
+import { useCourseProgress } from "@/lib/progress"
 import { KNOWN_STREAK } from "@/lib/types"
+import { cn } from "@/lib/utils"
 import type { RunResult, SeriesMode, Word } from "@/lib/types"
 
 const FRONT_LABEL: Record<string, string> = {
@@ -42,17 +48,15 @@ const FRONT_LABEL: Record<string, string> = {
  * happened. The revision itself happens over the page, in {@link SeriesDialog}.
  */
 export function CoursePractice({
-  courseId,
   words,
   signedIn,
 }: {
-  courseId: string
   words: Word[]
   /** Progress is only recorded for an account; anonymous revision is untracked. */
   signedIn: boolean
 }) {
   const { speak } = useKoreanSpeech()
-  const { progress, send } = useProgress(courseId, signedIn)
+  const { progress, send } = useCourseProgress()
   const [mode, setMode] = React.useState<SeriesMode | null>(null)
 
   const byId = React.useMemo(
@@ -61,15 +65,19 @@ export function CoursePractice({
   )
 
   // The lesson's order, not the order the runs happened to visit the words in.
-  const { review, known } = React.useMemo(() => {
-    const streaks = progress.streaks
+  const { review, known, learning } = React.useMemo(() => {
+    const stats = progress.stats
     return {
-      review: words.filter((word) => streaks[word.id] === 0),
-      known: words.filter((word) => (streaks[word.id] ?? 0) >= KNOWN_STREAK),
+      review: words.filter((word) => stats[word.id]?.streak === 0),
+      known: words.filter(
+        (word) => (stats[word.id]?.streak ?? 0) >= KNOWN_STREAK
+      ),
+      learning: words.filter((word) => {
+        const streak = stats[word.id]?.streak
+        return streak !== undefined && streak > 0 && streak < KNOWN_STREAK
+      }),
     }
-  }, [progress.streaks, words])
-
-  const remaining = words.length - review.length - known.length
+  }, [progress.stats, words])
 
   if (words.length === 0) {
     return (
@@ -102,15 +110,12 @@ export function CoursePractice({
 
       {signedIn ? (
         <>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            <Count value={known.length} label="connus" />
-            <Count value={review.length} label="à revoir" />
-            <Count value={remaining} label="restants" />
-            <span className="text-xs">
-              (un mot est connu après {KNOWN_STREAK} séries réussies
-              d&apos;affilée)
-            </span>
-          </div>
+          <CourseMeter
+            known={known.length}
+            learning={learning.length}
+            review={review.length}
+            total={words.length}
+          />
 
           <div className="grid gap-4 lg:grid-cols-2">
             <WordPanel
@@ -161,7 +166,7 @@ export function CoursePractice({
         open={mode !== null}
         mode={mode ?? "practice"}
         words={words}
-        streaks={progress.streaks}
+        stats={progress.stats}
         onOpenChange={(open) => setMode(open ? mode : null)}
         onRecord={(report: RunReport) => void send({ run: report })}
       />
@@ -169,10 +174,93 @@ export function CoursePractice({
   )
 }
 
-function Count({ value, label }: { value: number; label: string }) {
+/**
+ * The lesson at a glance. Segments run acquired → in progress → to review →
+ * untouched, so the bar fills from the left and turns green as the lesson is
+ * learnt. The figure is the share acquired, in the colour that share earns.
+ */
+function CourseMeter({
+  known,
+  learning,
+  review,
+  total,
+}: {
+  known: number
+  learning: number
+  review: number
+  total: number
+}) {
+  const percent = total ? Math.round((known / total) * 100) : 0
+  const untouched = total - known - learning - review
+  const parts: [StandingKey, number][] = [
+    ["known", known],
+    ["learning", learning],
+    ["review", review],
+    ["new", untouched],
+  ]
+
   return (
-    <span className="flex items-baseline gap-1.5">
-      <span className="text-lg font-semibold text-foreground tabular-nums">
+    <Card>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="text-sm font-semibold">Progression du cours</h3>
+          <span
+            className={cn(
+              "text-2xl leading-none font-semibold tabular-nums",
+              STANDING[scoreKey(percent)].ink
+            )}
+          >
+            {percent}%
+          </span>
+        </div>
+
+        {/* A meter, not a chart: the legend below carries the numbers, and the
+            2px gaps keep two adjacent colours from reading as one block. */}
+        <div
+          className="flex h-2.5 w-full gap-0.5"
+          role="img"
+          aria-label={`${known} mot${known > 1 ? "s" : ""} connu${known > 1 ? "s" : ""} sur ${total}, soit ${percent}%`}
+        >
+          {parts.map(([key, count]) =>
+            count > 0 ? (
+              <div
+                key={key}
+                className={cn("h-full rounded-full", STANDING[key].fill)}
+                style={{ width: `${(count / total) * 100}%` }}
+              />
+            ) : null
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <Count standing="known" value={known} label="connus" />
+          <Count standing="learning" value={learning} label="en cours" />
+          <Count standing="review" value={review} label="à revoir" />
+          <Count standing="new" value={untouched} label="jamais vus" />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Un mot devient vert après {KNOWN_STREAK} séries réussies
+          d&apos;affilée.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function Count({
+  standing,
+  value,
+  label,
+}: {
+  standing: StandingKey
+  value: number
+  label: string
+}) {
+  const { Icon, ink } = STANDING[standing]
+  return (
+    <span className="flex items-center gap-1.5">
+      <Icon className={cn("size-4 shrink-0", ink)} />
+      <span className="font-semibold text-foreground tabular-nums">
         {value}
       </span>
       {label}
@@ -303,13 +391,23 @@ function RunHistory({
                       <span className="ml-auto text-muted-foreground tabular-nums">
                         {run.known.length} / {answered}
                       </span>
-                      <span className="w-10 text-right tabular-nums">
+                      <span
+                        className={cn(
+                          "w-10 text-right font-medium tabular-nums",
+                          STANDING[scoreKey(percent)].ink
+                        )}
+                      >
                         {percent}%
                       </span>
                     </span>
                   </AccordionTrigger>
                   <AccordionPanel className="flex flex-col gap-3">
-                    <Progress value={percent} className="h-1.5" />
+                    {/* The indicator's colour is the score's, without forking
+                        the shadcn component to accept one. */}
+                    <Progress
+                      value={percent}
+                      className={cn("h-1.5", STANDING[scoreKey(percent)].bar)}
+                    />
                     <p className="text-xs text-muted-foreground">
                       {FRONT_LABEL[run.frontSide] ?? run.frontSide} · {run.size}{" "}
                       carte{run.size > 1 ? "s" : ""} tirée

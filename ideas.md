@@ -22,7 +22,7 @@
 17. avoir une info comme quuoi qu'on a réussi le cours (ça peut etre genre 80% de réussite vis à vis du nombre de mots appris et ceux à revoir)
 
 
-18. version web mobile friendly (pas défiler sur le tableau des mots) [x]
-19. sur les mots, voir combien de fois on a réussi (par rapport aux séries d'affilées, pour savoir quand est ce qu'il passera dans "connu". genre "2/3 réussites d'affilée") mais aussi marqué combien de fois on l'a mentionné comme "à revoir".
-20. rajouter des couleurs sur les mots pour savoir si c'est un mot qu'on a appris (vert), qu'on doit revoir (rouge), ou qu'on ne connait pas encore.
-21. rajouter des couleurs au global pour gamifier l'apprentissage (les pourcentages avec la barre = du rouge vers le vert etc)
+18. version web mobile friendly (pas défiler sur le tableau des mots)
+19. sur les mots, voir combien de fois on a réussi (par rapport aux séries d'affilées, pour savoir quand est ce qu'il passera dans "connu". genre "2/3 réussites d'affilée") mais aussi marqué combien de fois on l'a mentionné comme "à revoir". [x]
+20. rajouter des couleurs sur les mots pour savoir si c'est un mot qu'on a appris (vert), qu'on doit revoir (rouge), ou qu'on ne connait pas encore. [x]
+21. rajouter des couleurs au global pour gamifier l'apprentissage (les pourcentages avec la barre = du rouge vers le vert etc) [x]
