@@ -23,23 +23,43 @@ import type { CourseSummary } from "@/lib/types"
 type CourseFormDialogProps = {
   /** Omit to create a new lesson. */
   course?: Pick<CourseSummary, "id" | "title" | "date">
-  children: React.ReactNode
+  /** The trigger. Omit when the parent drives `open` itself. */
+  children?: React.ReactNode
+  /** Set to control the dialog from the parent; leave out to self-manage. */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function CourseFormDialog({ course, children }: CourseFormDialogProps) {
+export function CourseFormDialog({
+  course,
+  children,
+  open: openProp,
+  onOpenChange,
+}: CourseFormDialogProps) {
   const router = useRouter()
-  const [open, setOpen] = React.useState(false)
+  const [selfOpen, setSelfOpen] = React.useState(false)
+  const open = openProp ?? selfOpen
   const [pending, setPending] = React.useState(false)
   const [title, setTitle] = React.useState(course?.title ?? "")
   const [date, setDate] = React.useState(course?.date ?? "")
 
-  /** Reset on open rather than in an effect, so a cancelled edit is discarded. */
-  function handleOpenChange(next: boolean) {
-    if (next) {
+  /**
+   * Refill on open, so a cancelled edit is discarded. Done while rendering
+   * rather than in an effect — the parent may open us without going through
+   * `setOpen`, and an effect would paint the stale values first.
+   */
+  const [wasOpen, setWasOpen] = React.useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
       setTitle(course?.title ?? "")
       setDate(course?.date ?? new Date().toISOString().slice(0, 10))
     }
-    setOpen(next)
+  }
+
+  function setOpen(next: boolean) {
+    onOpenChange?.(next)
+    if (openProp === undefined) setSelfOpen(next)
   }
 
   async function submit(event: React.FormEvent) {
@@ -79,8 +99,8 @@ export function CourseFormDialog({ course, children }: CourseFormDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={children as React.ReactElement} />
+    <Dialog open={open} onOpenChange={setOpen}>
+      {children && <DialogTrigger render={children as React.ReactElement} />}
       <DialogContent className="max-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)]">
         <DialogHeader>
           <DialogTitle>

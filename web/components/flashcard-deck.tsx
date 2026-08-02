@@ -250,6 +250,11 @@ export function FlashcardDeck({
       ) {
         return
       }
+      // A dialog sits over the deck, and its focus often rests on the popup
+      // itself rather than a field — answering behind it would be a surprise.
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) {
+        return
+      }
       if (event.metaKey || event.ctrlKey || event.altKey) return
 
       if (event.key === " " || event.key === "Enter") {

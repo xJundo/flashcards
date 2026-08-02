@@ -64,6 +64,10 @@ export function CourseList({
   const router = useRouter()
   const [pendingDelete, setPendingDelete] =
     React.useState<CourseSummary | null>(null)
+  // `editing` outlives `editOpen` so the closing dialog keeps its title
+  // through the fade-out instead of flashing the "new lesson" wording.
+  const [editing, setEditing] = React.useState<CourseSummary | null>(null)
+  const [editOpen, setEditOpen] = React.useState(false)
 
   async function remove(course: CourseSummary) {
     try {
@@ -179,12 +183,15 @@ export function CourseList({
                     <DropdownMenuContent align="end">
                       <DropdownMenuGroup>
                         {course.editable && (
-                          <CourseFormDialog course={course}>
-                            <DropdownMenuItem closeOnClick={false}>
-                              <PencilIcon />
-                              Renommer / redater
-                            </DropdownMenuItem>
-                          </CourseFormDialog>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditing(course)
+                              setEditOpen(true)
+                            }}
+                          >
+                            <PencilIcon />
+                            Renommer / redater
+                          </DropdownMenuItem>
                         )}
                         <DropdownMenuItem
                           render={
@@ -220,6 +227,15 @@ export function CourseList({
           ))}
         </div>
       )}
+
+      {/* Lives outside the dropdown on purpose: a menu left open behind the
+          dialog keeps its own typeahead, which swallows every letter typed
+          into the title field. */}
+      <CourseFormDialog
+        course={editing ?? undefined}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
 
       <AlertDialog
         open={pendingDelete !== null}

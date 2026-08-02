@@ -12,5 +12,9 @@
 7. compte admin
 8. faire une page de profile ou tu peux mettre un gif ou photo + langues d'intérêt et les profs auxquels t'es abonné.
 9. intégrer deepseek pour la création de cours (ou un truc du genre) pour que les profs puissent créer des cours plus facilement (notes additionnelles, traduction automatique, etc).
-
-
+10. une page à propos pour expliquer pourquoi les flashcards sont utiles pour apprendre une langue, et comment ça marche.
+11. proposer plusieurs niveaux (débutant, intermédiaire, avancé) pour les cours.
+12. proposer plusieurs niveaux sur les flashcards, genre des presets de prononciation ou non, etc, pour une config plus simple pcq l'utilisateur peut se perdre en apprenant.
+13. revoir les keybinds
+14. changer la voix par un vrai natif coréen ?
+15. version web mobile friendly (pas défiler sur le tableau des mots)
