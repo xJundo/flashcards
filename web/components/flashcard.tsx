@@ -1,5 +1,6 @@
 "use client"
 
+import type * as React from "react"
 import { Volume2Icon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -22,6 +23,7 @@ function backOf(front: Side): Side {
 
 /** The flip card itself: one button, two faces, no state of its own. */
 export function Flashcard({
+  ref,
   word,
   front,
   flipped,
@@ -29,6 +31,8 @@ export function Flashcard({
   onFlip,
   className,
 }: {
+  /** The session anchors focus here, so a keystroke always reaches the card. */
+  ref?: React.Ref<HTMLButtonElement>
   word: Word
   front: Side
   flipped: boolean
@@ -39,6 +43,7 @@ export function Flashcard({
   return (
     <div className={cn("[perspective:1200px]", className)}>
       <button
+        ref={ref}
         type="button"
         onClick={onFlip}
         aria-label={flipped ? "Voir le recto" : "Voir le verso"}

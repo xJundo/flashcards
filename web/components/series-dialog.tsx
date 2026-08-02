@@ -111,6 +111,7 @@ export function SeriesDialog({
   // Guards the one write each deck is entitled to, whether it comes from
   // reaching the last card or from closing the popup part-way.
   const recorded = React.useRef<DeckCard[] | null>(null)
+  const cardRef = React.useRef<HTMLButtonElement>(null)
 
   const pools = React.useMemo(
     () => ({
@@ -234,6 +235,17 @@ export function SeriesDialog({
 
   const current = run && !finished ? run.deck[run.index] : undefined
 
+  // Every new card takes the focus back. Clicking « Acquis » or « Écouter »
+  // leaves that button focused, and the browser would then hand it the next
+  // Espace; anchoring on the card keeps the shortcuts meaning the same thing
+  // whatever was pressed or clicked before. Switching the face mid-run is not
+  // a new card, so it leaves the picker alone.
+  const cardKey = current ? `${run?.index}:${current.word.id}` : null
+  React.useEffect(() => {
+    if (!cardKey) return
+    cardRef.current?.focus({ preventScroll: true })
+  }, [cardKey])
+
   // Autoplay reads the Korean side as soon as it becomes visible. In `audio`
   // mode the sound *is* the prompt, so it plays whatever the setting says.
   const { autoplay, romanization } = settings
@@ -258,12 +270,16 @@ export function SeriesDialog({
         ) {
           return
         }
-        // Space and Enter belong to whatever control has focus — a switch, a
-        // button — before they belong to the card. Arrows never do.
+        // Space and Enter belong to a control that *consumes* them — a switch,
+        // a toggle — before they belong to the card. A plain button keeps the
+        // focus it took when it was clicked or when a shortcut fired, so
+        // deferring to it would turn the next Espace into a repeat of that
+        // button — replaying the audio, re-answering the card — instead of a
+        // flip. Arrows never belong to a control.
         if (
           activation &&
           target.closest(
-            "button, a[href], [role='switch'], [role='checkbox'], [role='radio']"
+            "a[href], [role='switch'], [role='checkbox'], [role='radio'], [aria-pressed]"
           )
         ) {
           return
@@ -374,6 +390,7 @@ export function SeriesDialog({
                 current && (
                   <>
                     <Flashcard
+                      ref={cardRef}
                       word={current.word}
                       front={current.front}
                       flipped={run.flipped}
