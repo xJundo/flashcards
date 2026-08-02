@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion"
 import { ChevronDownIcon } from "lucide-react"
 
@@ -22,10 +23,18 @@ function AccordionItem({ className, ...props }: AccordionPrimitive.Item.Props) {
 function AccordionTrigger({
   className,
   children,
+  action,
   ...props
-}: AccordionPrimitive.Trigger.Props) {
+}: AccordionPrimitive.Trigger.Props & {
+  /** Controls that belong to the row rather than to the panel. Rendered beside
+   *  the trigger, never inside it — a button cannot nest in a button. */
+  action?: React.ReactNode
+}) {
   return (
-    <AccordionPrimitive.Header data-slot="accordion-header" className="flex">
+    <AccordionPrimitive.Header
+      data-slot="accordion-header"
+      className="flex items-center gap-1"
+    >
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
@@ -37,6 +46,7 @@ function AccordionTrigger({
         {children}
         <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
       </AccordionPrimitive.Trigger>
+      {action}
     </AccordionPrimitive.Header>
   )
 }

@@ -7,6 +7,7 @@ import {
   DumbbellIcon,
   PlayIcon,
   RotateCcwIcon,
+  Trash2Icon,
   Volume2Icon,
   XIcon,
 } from "lucide-react"
@@ -32,6 +33,7 @@ const FRONT_LABEL: Record<string, string> = {
   translation: "français → coréen",
   random: "sens aléatoire",
   audio: "à l'écoute",
+  mixed: "sens changé en cours de route",
 }
 
 /**
@@ -138,6 +140,7 @@ export function CoursePractice({
           <RunHistory
             runs={progress.runs}
             byId={byId}
+            onDelete={(id) => void send({ deleteRun: id })}
             onReset={() => void send({ clearRuns: true })}
           />
         </>
@@ -248,10 +251,12 @@ function WordPanel({
 function RunHistory({
   runs,
   byId,
+  onDelete,
   onReset,
 }: {
   runs: RunResult[]
   byId: Map<string, Word>
+  onDelete: (id: string) => void
   onReset: () => void
 }) {
   return (
@@ -261,7 +266,7 @@ function RunHistory({
           <h3 className="text-sm font-semibold">Historique des séries</h3>
           {runs.length > 0 && (
             <Button variant="ghost" size="sm" onClick={onReset}>
-              Effacer
+              Tout effacer
             </Button>
           )}
         </div>
@@ -278,7 +283,18 @@ function RunHistory({
                 : 0
               return (
                 <AccordionItem key={run.id} value={run.id}>
-                  <AccordionTrigger>
+                  <AccordionTrigger
+                    action={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label={`Supprimer la série du ${formatRunDate(run.at)}`}
+                        onClick={() => onDelete(run.id)}
+                      >
+                        <Trash2Icon />
+                      </Button>
+                    }
+                  >
                     <span className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1">
                       <span>{formatRunDate(run.at)}</span>
                       {!run.completed && (

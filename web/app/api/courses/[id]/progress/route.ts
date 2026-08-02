@@ -2,13 +2,14 @@ import { NextResponse } from "next/server"
 
 import {
   clearRuns,
+  deleteRun,
   getProgress,
   markAcquired,
   markForReview,
   recordRun,
 } from "@/lib/progress-store"
 import { currentUser } from "@/lib/session"
-import type { FrontSide } from "@/lib/types"
+import type { RunFront } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
@@ -48,11 +49,19 @@ type Body = {
   acquired?: string
   /** Sending one acquired word back to the review list. */
   review?: string
+  /** Dropping one series from the history. */
+  deleteRun?: string
   /** Wiping the series history. */
   clearRuns?: boolean
 }
 
-const FRONT_SIDES: FrontSide[] = ["korean", "translation", "random", "audio"]
+const FRONT_SIDES: RunFront[] = [
+  "korean",
+  "translation",
+  "random",
+  "audio",
+  "mixed",
+]
 
 export async function POST(request: Request, { params }: Params) {
   const { id } = await params
@@ -87,6 +96,7 @@ export async function POST(request: Request, { params }: Params) {
 
   if (body.acquired) await markAcquired(userId, id, body.acquired)
   if (body.review) await markForReview(userId, body.review)
+  if (body.deleteRun) await deleteRun(userId, body.deleteRun)
   if (body.clearRuns) await clearRuns(userId, id)
 
   return NextResponse.json(await getProgress(userId, id))

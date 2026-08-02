@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 import { runWords, runs, wordProgress, words } from "@/lib/db/schema"
 import { isId } from "@/lib/normalize"
 import { KNOWN_STREAK } from "@/lib/types"
-import type { FrontSide, Progress, RunResult } from "@/lib/types"
+import type { Progress, RunFront, RunResult } from "@/lib/types"
 
 const MAX_RUNS = 20
 
@@ -20,7 +20,7 @@ export type RunInput = {
   /** How many cards the deck held, answered or not. */
   size: number
   completed: boolean
-  frontSide: FrontSide
+  frontSide: RunFront
 }
 
 export async function getProgress(
@@ -82,7 +82,7 @@ export async function getProgress(
         failed: answers.failed,
         size: row.size,
         completed: row.completed,
-        frontSide: row.frontSide as FrontSide,
+        frontSide: row.frontSide as RunFront,
       }
     }),
   }
@@ -224,6 +224,15 @@ export async function markForReview(
     .where(
       and(eq(wordProgress.userId, userId), eq(wordProgress.wordId, wordId))
     )
+}
+
+/**
+ * Drops one series from the history. Like {@link clearRuns}, it only forgets
+ * what happened — the standings the series produced are left where they are.
+ */
+export async function deleteRun(userId: string, runId: string): Promise<void> {
+  if (!isId(runId)) return
+  await db.delete(runs).where(and(eq(runs.userId, userId), eq(runs.id, runId)))
 }
 
 /** Wipes the series history. Word standings are deliberately left alone. */

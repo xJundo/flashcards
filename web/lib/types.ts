@@ -67,6 +67,12 @@ export function standingOf(streak: number | undefined): Standing | null {
   return streak >= KNOWN_STREAK ? "known" : "learning"
 }
 
+/**
+ * The sense a series was played in. `mixed` is not a setting — it is what a
+ * series becomes once the learner switches sides part-way through it.
+ */
+export type RunFront = FrontSide | "mixed"
+
 /** One recorded series, with the verdict of every card that was answered. */
 export type RunResult = {
   id: string
@@ -80,7 +86,7 @@ export type RunResult = {
   size: number
   /** `false` when the series was closed before the last card. */
   completed: boolean
-  frontSide: FrontSide
+  frontSide: RunFront
 }
 
 /** A learner's standing on one lesson. Private, never shared between accounts. */

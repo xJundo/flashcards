@@ -3,7 +3,7 @@
 import * as React from "react"
 
 import { api } from "@/lib/api"
-import type { FrontSide, Progress } from "@/lib/types"
+import type { Progress, RunFront } from "@/lib/types"
 
 const EMPTY: Progress = { streaks: {}, runs: [] }
 
@@ -14,11 +14,12 @@ type Action =
         known: string[]
         size: number
         completed: boolean
-        frontSide: FrontSide
+        frontSide: RunFront
       }
     }
   | { acquired: string }
   | { review: string }
+  | { deleteRun: string }
   | { clearRuns: true }
 
 /**

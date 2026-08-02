@@ -25,6 +25,7 @@ import { KNOWN_STREAK } from "@/lib/types"
 import type {
   DeckSource,
   FrontSide,
+  RunFront,
   SeriesMode,
   Verdict,
   Word,
@@ -39,8 +40,10 @@ type Run = {
   index: number
   flipped: boolean
   verdicts: Record<string, Verdict>
-  /** Frozen at draw time: the recap reads the series in the terms it was played. */
+  /** The sense the cards are being shown in right now. */
   frontSide: FrontSide
+  /** Set once a card has been answered in a sense the run no longer uses. */
+  mixed: boolean
 }
 
 /** What a finished — or abandoned — series hands back to the store. */
@@ -49,7 +52,7 @@ export type RunReport = {
   failed: string[]
   size: number
   completed: boolean
-  frontSide: FrontSide
+  frontSide: RunFront
 }
 
 const SOURCE_LABEL: Record<DeckSource, string> = {
@@ -60,6 +63,12 @@ const SOURCE_LABEL: Record<DeckSource, string> = {
 
 const SIZES = [10, 20, 50]
 
+/** `random` is decided card by card, so each draw resolves it on its own. */
+function faceFor(frontSide: FrontSide): Side {
+  if (frontSide !== "random") return frontSide
+  return Math.random() < 0.5 ? "korean" : "translation"
+}
+
 function buildDeck(
   words: Word[],
   frontSide: FrontSide,
@@ -69,12 +78,7 @@ function buildDeck(
   const ordered = shuffled ? shuffle(words) : words
   return (size ? ordered.slice(0, size) : ordered).map((word) => ({
     word,
-    front:
-      frontSide === "random"
-        ? Math.random() < 0.5
-          ? "korean"
-          : "translation"
-        : frontSide,
+    front: faceFor(frontSide),
   }))
 }
 
@@ -131,9 +135,36 @@ export function SeriesDialog({
         flipped: false,
         verdicts: {},
         frontSide: next.frontSide,
+        mixed: false,
       })
     },
     []
+  )
+
+  /**
+   * Switching sense mid-run rewrites the cards still to come, and leaves the
+   * ones already answered as they were actually played. Nothing is redrawn:
+   * the deck, the order and the verdicts all survive.
+   */
+  const changeFront = React.useCallback(
+    (next: FrontSide) => {
+      update({ frontSide: next })
+      setRun((state) => {
+        if (!state || next === state.frontSide) return state
+        return {
+          ...state,
+          frontSide: next,
+          // Only a sense some card was *answered* in counts as a change; a
+          // switch made before the first verdict just corrects the setup.
+          mixed: state.mixed || Object.keys(state.verdicts).length > 0,
+          flipped: false,
+          deck: state.deck.map((card, position) =>
+            position < state.index ? card : { ...card, front: faceFor(next) }
+          ),
+        }
+      })
+    },
+    [update]
   )
 
   const record = React.useCallback(
@@ -148,7 +179,7 @@ export function SeriesDialog({
         failed: ids("unknown"),
         size: state.deck.length,
         completed,
-        frontSide: state.frontSide,
+        frontSide: state.mixed ? "mixed" : state.frontSide,
       })
     },
     [mode, onRecord]
@@ -379,6 +410,10 @@ export function SeriesDialog({
                     </div>
 
                     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                      <FrontSidePicker
+                        value={run.frontSide}
+                        onChange={changeFront}
+                      />
                       <Toggle
                         id="series-romanization"
                         label="Prononciation"
@@ -454,6 +489,36 @@ export function SeriesDialog({
   )
 }
 
+/**
+ * Which face comes first. Offered on the launch screen *and* during the run —
+ * a series that turns out to be too easy one way should be turnable the other
+ * way without losing the cards already answered.
+ */
+function FrontSidePicker({
+  value,
+  onChange,
+}: {
+  value: FrontSide
+  onChange: (frontSide: FrontSide) => void
+}) {
+  return (
+    <ToggleGroup
+      value={[value]}
+      onValueChange={(next) =>
+        onChange((next[0] as FrontSide | undefined) ?? value)
+      }
+      variant="outline"
+      spacing={0}
+      aria-label="Face visible en premier"
+    >
+      <ToggleGroupItem value="korean">Coréen</ToggleGroupItem>
+      <ToggleGroupItem value="translation">Français</ToggleGroupItem>
+      <ToggleGroupItem value="random">Aléatoire</ToggleGroupItem>
+      <ToggleGroupItem value="audio">Écoute</ToggleGroupItem>
+    </ToggleGroup>
+  )
+}
+
 function Toggle({
   id,
   label,
@@ -508,30 +573,21 @@ function SetupScreen({
         </div>
 
         <Field label="Face visible en premier">
-          <ToggleGroup
-            value={[settings.frontSide]}
-            onValueChange={(value) =>
-              onChange({
-                frontSide: (value[0] as FrontSide | undefined) ?? "korean",
-              })
-            }
-            variant="outline"
-            spacing={0}
-            aria-label="Face visible en premier"
-          >
-            <ToggleGroupItem value="korean">Coréen</ToggleGroupItem>
-            <ToggleGroupItem value="translation">Français</ToggleGroupItem>
-            <ToggleGroupItem value="random">Aléatoire</ToggleGroupItem>
-            <ToggleGroupItem value="audio">Écoute</ToggleGroupItem>
-          </ToggleGroup>
+          <FrontSidePicker
+            value={settings.frontSide}
+            onChange={(frontSide) => onChange({ frontSide })}
+          />
         </Field>
 
         <Field label="Mots">
           <ToggleGroup
             value={[source]}
+            // Falling back to the current value keeps the group single-choice:
+            // clicking the active item would otherwise clear it and quietly
+            // change the draw.
             onValueChange={(value) =>
               onChange({
-                source: (value[0] as DeckSource | undefined) ?? "all",
+                source: (value[0] as DeckSource | undefined) ?? source,
               })
             }
             variant="outline"
@@ -559,9 +615,8 @@ function SetupScreen({
               value={[String(size ?? "all")]}
               onValueChange={(value) => {
                 const next = value[0]
-                onChange({
-                  size: !next || next === "all" ? null : Number(next),
-                })
+                if (!next) return
+                onChange({ size: next === "all" ? null : Number(next) })
               }}
               variant="outline"
               spacing={0}
