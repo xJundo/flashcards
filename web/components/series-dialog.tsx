@@ -56,7 +56,7 @@ export type RunReport = {
 }
 
 const SOURCE_LABEL: Record<DeckSource, string> = {
-  all: "Tout le cours",
+  all: "Tout",
   todo: "Pas encore connus",
   review: "À revoir",
 }
@@ -329,20 +329,25 @@ export function SeriesDialog({
         showCloseButton={false}
         className="top-0 left-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 rounded-none bg-background p-0 ring-0 sm:max-w-none"
       >
-        <header className="flex flex-wrap items-center gap-3 border-b px-4 py-3">
+        <header className="flex items-center gap-3 border-b px-4 py-3">
           <Badge
             variant={mode === "series" ? "default" : "secondary"}
-            className="gap-1.5"
+            className="shrink-0 gap-1.5"
           >
             {run && !finished && (
               <span className="size-1.5 animate-pulse rounded-full bg-current" />
             )}
-            {run && !finished ? `${title} en cours` : title}
+            {title}
+            {/* The pulsing dot already says « en cours »; on a phone the words
+                push the close button onto a second line. */}
+            {run && !finished && (
+              <span className="max-sm:hidden">en cours</span>
+            )}
           </Badge>
           <DialogTitle className="sr-only">{title}</DialogTitle>
 
           {run && (
-            <div className="flex min-w-40 flex-1 items-center gap-3">
+            <div className="flex min-w-28 flex-1 items-center gap-3 sm:min-w-40">
               <Progress
                 value={
                   (Math.min(run.index, run.deck.length) / run.deck.length) * 100
@@ -403,7 +408,7 @@ export function SeriesDialog({
                       <Button
                         variant="outline"
                         size="lg"
-                        className="flex-1 sm:flex-none"
+                        className="h-11 flex-1 sm:h-9 sm:flex-none"
                         onClick={() => answer("unknown")}
                       >
                         <XIcon data-icon="inline-start" />À revoir
@@ -411,6 +416,7 @@ export function SeriesDialog({
                       <Button
                         variant="outline"
                         size="lg"
+                        className="h-11 w-11 sm:h-9 sm:w-auto"
                         aria-label="Écouter en coréen"
                         onClick={() => speak(current.word.korean)}
                       >
@@ -418,7 +424,7 @@ export function SeriesDialog({
                       </Button>
                       <Button
                         size="lg"
-                        className="flex-1 sm:flex-none"
+                        className="h-11 flex-1 sm:h-9 sm:flex-none"
                         onClick={() => answer("known")}
                       >
                         <CheckIcon data-icon="inline-start" />
@@ -447,7 +453,9 @@ export function SeriesDialog({
                       />
                     </div>
 
-                    <p className="text-center text-xs text-muted-foreground">
+                    {/* Keyboard-only: on a phone the shortcuts have nothing
+                        to press, and the line eats a card's worth of height. */}
+                    <p className="hidden text-center text-xs text-muted-foreground sm:block">
                       Espace : retourner · ← : à revoir · → : acquis · S :
                       écouter · Retour arrière : carte précédente
                     </p>
@@ -527,6 +535,9 @@ function FrontSidePicker({
       variant="outline"
       spacing={0}
       aria-label="Face visible en premier"
+      // Segmented items never shrink, so a narrow screen scrolls the group
+      // itself rather than pushing the layout past the viewport.
+      className="max-w-full overflow-x-auto"
     >
       <ToggleGroupItem value="korean">Coréen</ToggleGroupItem>
       <ToggleGroupItem value="translation">Français</ToggleGroupItem>
@@ -610,6 +621,7 @@ function SetupScreen({
             variant="outline"
             spacing={0}
             aria-label="Mots à travailler"
+            className="max-w-full overflow-x-auto"
           >
             {(Object.keys(SOURCE_LABEL) as DeckSource[]).map((key) => (
               <ToggleGroupItem
@@ -638,6 +650,7 @@ function SetupScreen({
               variant="outline"
               spacing={0}
               aria-label="Nombre de cartes"
+              className="max-w-full overflow-x-auto"
             >
               {sizes.map((count) => (
                 <ToggleGroupItem key={count} value={String(count)}>

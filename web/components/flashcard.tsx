@@ -57,9 +57,17 @@ export function Flashcard({
           side={front}
           romanization={romanization}
           hint={
-            front === "audio"
-              ? "S pour réécouter · Espace pour retourner"
-              : "Clique ou Espace pour retourner"
+            <>
+              {/* A phone has no Espace and nothing to click. */}
+              <span className="sm:hidden">
+                Touche la carte pour la retourner
+              </span>
+              <span className="max-sm:hidden">
+                {front === "audio"
+                  ? "S pour réécouter · Espace pour retourner"
+                  : "Clique ou Espace pour retourner"}
+              </span>
+            </>
           }
         />
         <CardFace
@@ -72,7 +80,7 @@ export function Flashcard({
           // The note is the answer to the prompt, so it only belongs on the
           // flipped face.
           note
-          hint="← à revoir · acquis →"
+          hint={<span className="max-sm:hidden">← à revoir · acquis →</span>}
           className="[transform:rotateY(180deg)]"
         />
       </button>
@@ -96,7 +104,7 @@ function CardFace({
   translation?: boolean
   /** Shows the additional note — only on the flipped face. */
   note?: boolean
-  hint: string
+  hint: React.ReactNode
   className?: string
 }) {
   return (

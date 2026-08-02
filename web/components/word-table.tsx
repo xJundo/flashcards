@@ -87,7 +87,7 @@ export function WordTable({
         </div>
         {editable && (
           <WordFormDialog courseId={courseId}>
-            <Button>
+            <Button className="w-full sm:w-auto">
               <PlusIcon data-icon="inline-start" />
               Ajouter un mot
             </Button>
@@ -114,67 +114,119 @@ export function WordTable({
           </EmptyHeader>
         </Empty>
       ) : (
-        <div className="overflow-x-auto rounded-xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10" />
-                <TableHead>Coréen</TableHead>
-                <TableHead>Prononciation</TableHead>
-                <TableHead>Traduction</TableHead>
-                {editable && (
-                  <TableHead className="w-20 text-right">Actions</TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((word) => (
-                <TableRow key={word.id}>
-                  <TableCell>
-                    <SpeakButton text={word.korean} />
-                  </TableCell>
-                  <TableCell lang="ko" className="font-medium">
+        <>
+          {/* Four columns never fit a phone, so a word becomes a block there. */}
+          <ul className="flex flex-col divide-y rounded-xl border sm:hidden">
+            {filtered.map((word) => (
+              <li key={word.id} className="flex items-start gap-2 p-3">
+                <SpeakButton text={word.korean} size="icon" />
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span lang="ko" className="font-medium break-words">
                     {word.korean}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {word.romanization}
-                  </TableCell>
-                  <TableCell>
+                  </span>
+                  {word.romanization && (
+                    <span className="text-sm break-words text-muted-foreground">
+                      {word.romanization}
+                    </span>
+                  )}
+                  <span className="text-sm break-words">
                     {word.translation}
-                    {word.note && (
-                      <span className="block text-xs text-muted-foreground">
-                        {word.note}
-                      </span>
-                    )}
-                  </TableCell>
+                  </span>
+                  {word.note && (
+                    <span className="mt-1 text-xs break-words text-muted-foreground">
+                      {word.note}
+                    </span>
+                  )}
+                </div>
+                {editable && (
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Modifier ${word.korean}`}
+                      onClick={() => setEditing(word)}
+                    >
+                      <PencilIcon />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Supprimer ${word.korean}`}
+                      disabled={deleting === word.id}
+                      onClick={() => remove(word)}
+                    >
+                      <TrashIcon />
+                    </Button>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div className="hidden rounded-xl border sm:block">
+            {/* Fixed columns and wrapping cells keep a long note inside the
+                page instead of stretching the table past it. */}
+            <Table className="table-fixed [&_td]:whitespace-normal">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12" />
+                  <TableHead className="w-[24%]">Coréen</TableHead>
+                  <TableHead className="w-[22%]">Prononciation</TableHead>
+                  <TableHead>Traduction</TableHead>
                   {editable && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Modifier ${word.korean}`}
-                          onClick={() => setEditing(word)}
-                        >
-                          <PencilIcon />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Supprimer ${word.korean}`}
-                          disabled={deleting === word.id}
-                          onClick={() => remove(word)}
-                        >
-                          <TrashIcon />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    <TableHead className="w-24 text-right">Actions</TableHead>
                   )}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((word) => (
+                  <TableRow key={word.id}>
+                    <TableCell>
+                      <SpeakButton text={word.korean} />
+                    </TableCell>
+                    <TableCell lang="ko" className="font-medium break-words">
+                      {word.korean}
+                    </TableCell>
+                    <TableCell className="break-words text-muted-foreground">
+                      {word.romanization}
+                    </TableCell>
+                    <TableCell className="break-words">
+                      {word.translation}
+                      {word.note && (
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {word.note}
+                        </span>
+                      )}
+                    </TableCell>
+                    {editable && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Modifier ${word.korean}`}
+                            onClick={() => setEditing(word)}
+                          >
+                            <PencilIcon />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Supprimer ${word.korean}`}
+                            disabled={deleting === word.id}
+                            onClick={() => remove(word)}
+                          >
+                            <TrashIcon />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {editing && (

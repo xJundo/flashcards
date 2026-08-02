@@ -50,16 +50,16 @@ export default async function CoursePage({ params }: Props) {
           Tous les cours
         </Button>
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-1">
             <p className="text-sm text-muted-foreground">
               {formatDate(course.date)}
               {course.owner && <> · publié par {course.owner.name}</>}
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight break-words">
               {course.title}
             </h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               render={<a href={`/api/courses/${course.id}/export`} download />}
