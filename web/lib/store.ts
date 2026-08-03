@@ -1,11 +1,28 @@
 import "server-only"
 
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm"
+import type { AnyPgColumn } from "drizzle-orm/pg-core"
 
 import { db } from "@/lib/db"
-import { courseEditors, courses, user, words } from "@/lib/db/schema"
+import {
+  courseCompletions,
+  courseEditors,
+  courseFavorites,
+  courses,
+  user,
+  wordProgress,
+  words,
+} from "@/lib/db/schema"
 import { isId, makeId } from "@/lib/normalize"
-import type { Author, Course, CourseSummary, Word } from "@/lib/types"
+import { KNOWN_STREAK } from "@/lib/types"
+import type {
+  Author,
+  Course,
+  CourseSummary,
+  Finisher,
+  GlobalStats,
+  Word,
+} from "@/lib/types"
 
 type CourseRow = typeof courses.$inferSelect
 type WordRow = typeof words.$inferSelect
@@ -36,34 +53,76 @@ function toCourseShell(row: CourseRow, owner: Author | null) {
 }
 
 /**
- * Every lesson, whoever wrote it. `viewerId` only decides which ones come back
- * flagged as editable — it never filters the list, since reading is public.
+ * Every lesson, whoever wrote it. `viewerId` only decides what comes back
+ * alongside each one — whether it is editable, bookmarked, and how far along
+ * the viewer is. It never filters the list, since reading is public.
+ *
+ * The viewer-specific joins are all one row at most, so they ride along on the
+ * word count without multiplying it; signed out, each is short-circuited to
+ * `false` rather than being skipped, which keeps one query for both cases.
  */
 export async function listCourses(viewerId?: string): Promise<CourseSummary[]> {
+  const mine = (column: AnyPgColumn) =>
+    viewerId ? eq(column, viewerId) : sql`false`
+
   const rows = await db
     .select({
       course: courses,
       owner: { id: user.id, name: user.name },
       wordCount: sql<number>`count(distinct ${words.id})::int`,
       invited: sql<boolean>`bool_or(${courseEditors.userId} is not null)`,
+      favorite: sql<boolean>`bool_or(${courseFavorites.userId} is not null)`,
+      completedAt: sql<Date | null>`max(${courseCompletions.completedAt})`,
+      known: sql<number>`count(distinct ${words.id}) filter (where ${wordProgress.streak} >= ${KNOWN_STREAK})::int`,
+      learning: sql<number>`count(distinct ${words.id}) filter (where ${wordProgress.streak} > 0 and ${wordProgress.streak} < ${KNOWN_STREAK})::int`,
+      review: sql<number>`count(distinct ${words.id}) filter (where ${wordProgress.streak} = 0)::int`,
     })
     .from(courses)
     .leftJoin(user, eq(courses.ownerId, user.id))
     .leftJoin(words, eq(words.courseId, courses.id))
     .leftJoin(
       courseEditors,
+      and(eq(courseEditors.courseId, courses.id), mine(courseEditors.userId))
+    )
+    .leftJoin(
+      courseFavorites,
       and(
-        eq(courseEditors.courseId, courses.id),
-        viewerId ? eq(courseEditors.userId, viewerId) : sql`false`
+        eq(courseFavorites.courseId, courses.id),
+        mine(courseFavorites.userId)
       )
+    )
+    .leftJoin(
+      courseCompletions,
+      and(
+        eq(courseCompletions.courseId, courses.id),
+        mine(courseCompletions.userId)
+      )
+    )
+    .leftJoin(
+      wordProgress,
+      and(eq(wordProgress.wordId, words.id), mine(wordProgress.userId))
     )
     .groupBy(courses.id, user.id)
     .orderBy(desc(courses.date), desc(courses.createdAt))
 
-  return rows.map(({ course, owner, wordCount, invited }) => ({
-    ...toCourseShell(course, toAuthor(owner)),
-    wordCount,
-    editable: Boolean(viewerId && (course.ownerId === viewerId || invited)),
+  return rows.map((row) => ({
+    ...toCourseShell(row.course, toAuthor(row.owner)),
+    wordCount: row.wordCount,
+    editable: Boolean(
+      viewerId && (row.course.ownerId === viewerId || row.invited)
+    ),
+    favorite: Boolean(viewerId && row.favorite),
+    standing: viewerId
+      ? {
+          known: row.known,
+          learning: row.learning,
+          review: row.review,
+          untouched: row.wordCount - row.known - row.learning - row.review,
+          completedAt: row.completedAt
+            ? new Date(row.completedAt).toISOString()
+            : null,
+        }
+      : null,
   }))
 }
 
@@ -313,6 +372,161 @@ export async function findUserByEmail(email: string): Promise<Author | null> {
     .where(eq(user.email, email.trim().toLowerCase()))
   return row ?? null
 }
+
+/* -------------------------------------------------------------------------- */
+/*  Favourites & completions                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Bookmarks a lesson, or drops the bookmark. Idempotent either way. */
+export async function setFavorite(
+  userId: string,
+  courseId: string,
+  favorite: boolean
+): Promise<boolean> {
+  if (!isId(courseId)) return false
+
+  if (!favorite) {
+    await db
+      .delete(courseFavorites)
+      .where(
+        and(
+          eq(courseFavorites.userId, userId),
+          eq(courseFavorites.courseId, courseId)
+        )
+      )
+    return false
+  }
+
+  // A bookmark on a lesson that no longer exists would trip the foreign key,
+  // and a stale card in an open tab is the ordinary way to get there.
+  const [course] = await db
+    .select({ id: courses.id })
+    .from(courses)
+    .where(eq(courses.id, courseId))
+  if (!course) return false
+
+  await db
+    .insert(courseFavorites)
+    .values({ userId, courseId })
+    .onConflictDoNothing()
+  return true
+}
+
+/**
+ * Everyone who finished this lesson, first to last. The only part of anyone's
+ * progress that is public — the fact alone, never the figures behind it.
+ */
+export async function listFinishers(courseId: string): Promise<Finisher[]> {
+  if (!isId(courseId)) return []
+  const rows = await db
+    .select({
+      id: user.id,
+      name: user.name,
+      completedAt: courseCompletions.completedAt,
+    })
+    .from(courseCompletions)
+    .innerJoin(user, eq(courseCompletions.userId, user.id))
+    .where(eq(courseCompletions.courseId, courseId))
+    .orderBy(asc(courseCompletions.completedAt))
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    completedAt: row.completedAt.toISOString(),
+  }))
+}
+
+/** What the viewer's own header shows on a lesson: the star and the date. */
+export async function getViewerState(
+  courseId: string,
+  userId: string | undefined
+): Promise<{ favorite: boolean; completedAt: string | null }> {
+  if (!userId || !isId(courseId)) return { favorite: false, completedAt: null }
+
+  const [[favorite], [completion]] = await Promise.all([
+    db
+      .select({ userId: courseFavorites.userId })
+      .from(courseFavorites)
+      .where(
+        and(
+          eq(courseFavorites.userId, userId),
+          eq(courseFavorites.courseId, courseId)
+        )
+      ),
+    db
+      .select({ completedAt: courseCompletions.completedAt })
+      .from(courseCompletions)
+      .where(
+        and(
+          eq(courseCompletions.userId, userId),
+          eq(courseCompletions.courseId, courseId)
+        )
+      ),
+  ])
+
+  return {
+    favorite: Boolean(favorite),
+    completedAt: completion?.completedAt.toISOString() ?? null,
+  }
+}
+
+/**
+ * The learner's standing across every lesson. Words never answered have no
+ * row at all, so `untouched` is what the catalogue holds minus what they have
+ * touched — which is also why the totals are read from the lessons themselves.
+ */
+export async function globalStats(userId: string): Promise<GlobalStats> {
+  const tally = (predicate: ReturnType<typeof sql>) =>
+    sql<number>`count(*) filter (where ${predicate})::int`
+
+  const [[progress], [wordTotal], [courseTotal], [completed], [favorites]] =
+    await Promise.all([
+      db
+        .select({
+          known: tally(sql`${wordProgress.streak} >= ${KNOWN_STREAK}`),
+          learning: tally(
+            sql`${wordProgress.streak} > 0 and ${wordProgress.streak} < ${KNOWN_STREAK}`
+          ),
+          review: tally(sql`${wordProgress.streak} = 0`),
+          tracked: sql<number>`count(distinct ${wordProgress.courseId})::int`,
+        })
+        .from(wordProgress)
+        .where(eq(wordProgress.userId, userId)),
+      db.select({ value: sql<number>`count(*)::int` }).from(words),
+      db.select({ value: sql<number>`count(*)::int` }).from(courses),
+      db
+        .select({ value: sql<number>`count(*)::int` })
+        .from(courseCompletions)
+        .where(eq(courseCompletions.userId, userId)),
+      db
+        .select({ value: sql<number>`count(*)::int` })
+        .from(courseFavorites)
+        .where(eq(courseFavorites.userId, userId)),
+    ])
+
+  const total = wordTotal?.value ?? 0
+  const known = progress?.known ?? 0
+  const learning = progress?.learning ?? 0
+  const review = progress?.review ?? 0
+
+  return {
+    words: {
+      known,
+      learning,
+      review,
+      untouched: Math.max(total - known - learning - review, 0),
+      total,
+    },
+    courses: {
+      tracked: progress?.tracked ?? 0,
+      completed: completed?.value ?? 0,
+      favorites: favorites?.value ?? 0,
+      total: courseTotal?.value ?? 0,
+    },
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 
 export function createWord(input: Partial<Word>): Word {
   return {

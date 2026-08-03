@@ -3,7 +3,13 @@ import "server-only"
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm"
 
 import { db } from "@/lib/db"
-import { runWords, runs, wordProgress, words } from "@/lib/db/schema"
+import {
+  courseCompletions,
+  runWords,
+  runs,
+  wordProgress,
+  words,
+} from "@/lib/db/schema"
 import { isId } from "@/lib/normalize"
 import { KNOWN_STREAK } from "@/lib/types"
 import type { Progress, RunFront, RunResult } from "@/lib/types"
@@ -21,6 +27,44 @@ export type RunInput = {
   size: number
   completed: boolean
   frontSide: RunFront
+}
+
+/** The database, or the transaction currently standing in for it. */
+type Executor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+/**
+ * Writes the lesson down as finished, the first time every one of its words is
+ * acquired at once. Only ever added, never removed: a word sent back to review
+ * afterwards — or a word the author appends later — lowers the meter again,
+ * but the learner did finish the lesson as it stood, and an author should not
+ * be able to revoke everyone's success by typing one more line.
+ *
+ * Called after anything that can raise the count; a miss can only lower it.
+ */
+async function engraveCompletion(
+  tx: Executor,
+  userId: string,
+  courseId: string
+): Promise<void> {
+  const [row] = await tx
+    .select({
+      total: sql<number>`count(*)::int`,
+      known: sql<number>`count(*) filter (where ${wordProgress.streak} >= ${KNOWN_STREAK})::int`,
+    })
+    .from(words)
+    .leftJoin(
+      wordProgress,
+      and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId))
+    )
+    .where(eq(words.courseId, courseId))
+
+  // An empty lesson is not an achievement.
+  if (!row || row.total === 0 || row.known < row.total) return
+
+  await tx
+    .insert(courseCompletions)
+    .values({ userId, courseId })
+    .onConflictDoNothing()
 }
 
 export async function getProgress(
@@ -208,6 +252,8 @@ export async function recordRun(
             updatedAt: new Date(),
           },
         })
+
+      await engraveCompletion(tx, userId, courseId)
     }
   })
 
@@ -238,6 +284,8 @@ export async function markAcquired(
       target: [wordProgress.userId, wordProgress.wordId],
       set: { streak: KNOWN_STREAK, updatedAt: new Date() },
     })
+
+  await engraveCompletion(db, userId, courseId)
 }
 
 /**

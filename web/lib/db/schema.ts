@@ -139,9 +139,58 @@ export const courseEditors = pgTable(
   (table) => [primaryKey({ columns: [table.courseId, table.userId] })]
 )
 
+/** A learner's bookmark on a lesson. Private: nobody sees anyone's shortlist. */
+export const courseFavorites = pgTable(
+  "course_favorites",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.courseId] }),
+    index("course_favorites_user_idx").on(table.userId, table.createdAt),
+  ]
+)
+
 /* -------------------------------------------------------------------------- */
 /*  Progress — per learner, never shared                                       */
+/*                                                                            */
+/*  With one exception, below: having finished a lesson is public. It is the   */
+/*  only fact about a learner's progress that leaves their account, and it is  */
+/*  a fact alone — never the tallies, the streaks or the series behind it.     */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The learner acquired every word of the lesson, once. Written the moment it
+ * happens and never taken back: a word sent to review afterwards — or a word
+ * added to the lesson later — lowers the bar again, but what was learnt was
+ * learnt. Without that, an author adding a word would revoke everyone's
+ * success at a stroke.
+ */
+export const courseCompletions = pgTable(
+  "course_completions",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    courseId: uuid("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    completedAt: timestamp("completed_at").defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.courseId] }),
+    index("course_completions_course_idx").on(
+      table.courseId,
+      table.completedAt
+    ),
+  ]
+)
 
 /**
  * How a learner stands on one word: `streak` counts the series answered right
@@ -235,8 +284,38 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const coursesRelations = relations(courses, ({ many, one }) => ({
   words: many(words),
   editors: many(courseEditors),
+  favorites: many(courseFavorites),
+  completions: many(courseCompletions),
   owner: one(user, { fields: [courses.ownerId], references: [user.id] }),
 }))
+
+export const courseFavoritesRelations = relations(
+  courseFavorites,
+  ({ one }) => ({
+    course: one(courses, {
+      fields: [courseFavorites.courseId],
+      references: [courses.id],
+    }),
+    user: one(user, {
+      fields: [courseFavorites.userId],
+      references: [user.id],
+    }),
+  })
+)
+
+export const courseCompletionsRelations = relations(
+  courseCompletions,
+  ({ one }) => ({
+    course: one(courses, {
+      fields: [courseCompletions.courseId],
+      references: [courses.id],
+    }),
+    user: one(user, {
+      fields: [courseCompletions.userId],
+      references: [user.id],
+    }),
+  })
+)
 
 export const wordsRelations = relations(words, ({ one }) => ({
   course: one(courses, {

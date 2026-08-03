@@ -3,12 +3,13 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOutIcon, UserIcon } from "lucide-react"
+import { ChartColumnIcon, LogOutIcon, UserIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -44,18 +45,32 @@ export function UserMenu({ user }: { user: Author | null }) {
         }
       />
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={async () => {
-            await signOut()
-            router.push("/")
-            router.refresh()
-          }}
-        >
-          <LogOutIcon data-icon="inline-start" />
-          Se déconnecter
-        </DropdownMenuItem>
+        {/* The group is not decoration: `DropdownMenuLabel` is Base UI's
+            `Menu.GroupLabel`, which throws outside one — it is what the group
+            takes its accessible name from. */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            render={
+              <Link href="/stats">
+                <ChartColumnIcon data-icon="inline-start" />
+                Ma progression
+              </Link>
+            }
+          />
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={async () => {
+              await signOut()
+              router.push("/")
+              router.refresh()
+            }}
+          >
+            <LogOutIcon data-icon="inline-start" />
+            Se déconnecter
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )

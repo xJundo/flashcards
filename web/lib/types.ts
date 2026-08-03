@@ -9,6 +9,9 @@ export type Word = {
 /** How a learner appears to everyone else: the handle, never the email. */
 export type Author = { id: string; name: string }
 
+/** Someone who acquired every word of a lesson, as everyone else sees them. */
+export type Finisher = Author & { completedAt: string }
+
 export type Course = {
   id: string
   title: string
@@ -25,6 +28,49 @@ export type CourseSummary = Omit<Course, "words"> & {
   wordCount: number
   /** Whether the current viewer may change this lesson. */
   editable: boolean
+  /** Bookmarked by the viewer. Always `false` when signed out. */
+  favorite: boolean
+  /** Where the viewer stands on this lesson — `null` when signed out. */
+  standing: CourseStanding | null
+}
+
+/**
+ * How much of one lesson one learner holds. The four counts add up to the
+ * lesson's word count, `untouched` being the words never answered at all.
+ */
+export type CourseStanding = {
+  known: number
+  learning: number
+  review: number
+  untouched: number
+  /**
+   * When every word was acquired, ISO. Kept once earned: see
+   * `course_completions` for why it is never taken back.
+   */
+  completedAt: string | null
+}
+
+/** The share of the lesson acquired, rounded — what the meter shows. */
+export function percentOf(known: number, total: number): number {
+  return total ? Math.round((known / total) * 100) : 0
+}
+
+/** A learner's standing across every lesson, for the stats page. */
+export type GlobalStats = {
+  words: {
+    known: number
+    learning: number
+    review: number
+    untouched: number
+    total: number
+  }
+  courses: {
+    /** Lessons with at least one word answered. */
+    tracked: number
+    completed: number
+    favorites: number
+    total: number
+  }
 }
 
 /** `audio` plays the word without showing it, to write it from hearing alone. */

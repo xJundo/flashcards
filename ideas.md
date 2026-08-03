@@ -22,9 +22,9 @@
 16. proposer plusieurs niveaux (débutant, intermédiaire, avancé) pour les cours.
 17. proposer plusieurs niveaux sur les flashcards, genre des presets de prononciation ou non, etc, pour une config plus simple pcq l'utilisateur peut se perdre en apprenant.
 18. revoir les keybinds
-19. changer la voix par un vrai natif coréen ?
-20. ajouter des cours en favori
-21. avoir une page de stats pour voir son évolution (nombre de mots appris, nombre de cours suivis, etc).
-22. avoir une info comme quuoi qu'on a réussi le cours (ça peut etre genre 80% de réussite vis à vis du nombre de mots appris et ceux à revoir)
+19. changer la voix par un vrai natif coréen ? (il faudrait un vps plus puissant)
+20. ajouter des cours en favori [x]
+21. avoir une page de stats pour voir son évolution (nombre de mots appris, nombre de cours suivis, etc). [x]
+22. avoir une info comme quuoi qu'on a réussi le cours (100% des mots connus), sur la page d'accueil et sur la page du cours, plus la liste publique de ceux qui l'ont réussi. [x]
 
 

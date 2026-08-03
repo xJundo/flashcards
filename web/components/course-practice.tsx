@@ -12,6 +12,7 @@ import {
   XIcon,
 } from "lucide-react"
 
+import { CourseMeter } from "@/components/course-meter"
 import { SeriesDialog, type RunReport } from "@/components/series-dialog"
 import {
   STANDING,
@@ -50,10 +51,13 @@ const FRONT_LABEL: Record<string, string> = {
 export function CoursePractice({
   words,
   signedIn,
+  completedAt,
 }: {
   words: Word[]
   /** Progress is only recorded for an account; anonymous revision is untracked. */
   signedIn: boolean
+  /** When the viewer acquired every word, ISO — as the server knew it. */
+  completedAt: string | null
 }) {
   const { speak } = useKoreanSpeech()
   const { progress, send } = useCourseProgress()
@@ -78,6 +82,21 @@ export function CoursePractice({
       }),
     }
   }, [progress.stats, words])
+
+  const standing = {
+    known: known.length,
+    learning: learning.length,
+    review: review.length,
+    untouched: words.length - known.length - learning.length - review.length,
+    // The server engraves the completion as it records the series, but this
+    // page was rendered before that happened. Reading it off the standings too
+    // spares the trophy a reload — and the date is today either way.
+    completedAt:
+      completedAt ??
+      (words.length > 0 && known.length === words.length
+        ? new Date().toISOString()
+        : null),
+  }
 
   // The two moves a learner can make by hand, shared by the panels that offer
   // them: "à revoir" only goes up, "connus" only goes down, "en cours" both.
@@ -123,12 +142,7 @@ export function CoursePractice({
 
       {signedIn ? (
         <>
-          <CourseMeter
-            known={known.length}
-            learning={learning.length}
-            review={review.length}
-            total={words.length}
-          />
+          <CourseMeter standing={standing} total={words.length} />
 
           <div className="grid gap-4 lg:grid-cols-3">
             <WordPanel
@@ -191,100 +205,6 @@ export function CoursePractice({
         onRecord={(report: RunReport) => void send({ run: report })}
       />
     </div>
-  )
-}
-
-/**
- * The lesson at a glance. Segments run acquired → in progress → to review →
- * untouched, so the bar fills from the left and turns green as the lesson is
- * learnt. The figure is the share acquired, in the colour that share earns.
- */
-function CourseMeter({
-  known,
-  learning,
-  review,
-  total,
-}: {
-  known: number
-  learning: number
-  review: number
-  total: number
-}) {
-  const percent = total ? Math.round((known / total) * 100) : 0
-  const untouched = total - known - learning - review
-  const parts: [StandingKey, number][] = [
-    ["known", known],
-    ["learning", learning],
-    ["review", review],
-    ["new", untouched],
-  ]
-
-  return (
-    <Card>
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <h3 className="text-sm font-semibold">Progression du cours</h3>
-          <span
-            className={cn(
-              "text-2xl leading-none font-semibold tabular-nums",
-              STANDING[scoreKey(percent)].ink
-            )}
-          >
-            {percent}%
-          </span>
-        </div>
-
-        {/* A meter, not a chart: the legend below carries the numbers, and the
-            2px gaps keep two adjacent colours from reading as one block. */}
-        <div
-          className="flex h-2.5 w-full gap-0.5"
-          role="img"
-          aria-label={`${known} mot${known > 1 ? "s" : ""} connu${known > 1 ? "s" : ""} sur ${total}, soit ${percent}%`}
-        >
-          {parts.map(([key, count]) =>
-            count > 0 ? (
-              <div
-                key={key}
-                className={cn("h-full rounded-full", STANDING[key].fill)}
-                style={{ width: `${(count / total) * 100}%` }}
-              />
-            ) : null
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <Count standing="known" value={known} label="connus" />
-          <Count standing="learning" value={learning} label="en cours" />
-          <Count standing="review" value={review} label="à revoir" />
-          <Count standing="new" value={untouched} label="jamais vus" />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Un mot devient vert après {KNOWN_STREAK} séries réussies
-          d&apos;affilée.
-        </p>
-      </CardContent>
-    </Card>
-  )
-}
-
-function Count({
-  standing,
-  value,
-  label,
-}: {
-  standing: StandingKey
-  value: number
-  label: string
-}) {
-  const { Icon, ink } = STANDING[standing]
-  return (
-    <span className="flex items-center gap-1.5">
-      <Icon className={cn("size-4 shrink-0", ink)} />
-      <span className="font-semibold text-foreground tabular-nums">
-        {value}
-      </span>
-      {label}
-    </span>
   )
 }
 
