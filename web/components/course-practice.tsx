@@ -32,7 +32,7 @@ import { useKoreanSpeech } from "@/hooks/use-korean-speech"
 import { useCourseProgress } from "@/lib/progress"
 import { KNOWN_STREAK } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import type { RunResult, SeriesMode, Word } from "@/lib/types"
+import type { RunResult, SeriesMode, Word, WordStat } from "@/lib/types"
 
 const FRONT_LABEL: Record<string, string> = {
   korean: "coréen → français",
@@ -79,6 +79,19 @@ export function CoursePractice({
     }
   }, [progress.stats, words])
 
+  // The two moves a learner can make by hand, shared by the panels that offer
+  // them: "à revoir" only goes up, "connus" only goes down, "en cours" both.
+  const acquire: PanelAction = {
+    icon: <CheckIcon />,
+    label: (word) => `Marquer ${word.korean} comme connu`,
+    run: (id) => void send({ acquired: id }),
+  }
+  const sendBack: PanelAction = {
+    icon: <RotateCcwIcon />,
+    label: (word) => `Remettre ${word.korean} à revoir`,
+    run: (id) => void send({ review: id }),
+  }
+
   if (words.length === 0) {
     return (
       <Card>
@@ -117,28 +130,35 @@ export function CoursePractice({
             total={words.length}
           />
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-3">
             <WordPanel
+              standing="review"
               title="À revoir"
               words={review}
               empty="Les mots ratés en série arrivent ici, jusqu'à ce que tu les réussisses à nouveau."
               onSpeak={speak}
-              action={{
-                icon: <CheckIcon />,
-                label: (word) => `Marquer ${word.korean} comme connu`,
-                run: (id) => void send({ acquired: id }),
-              }}
+              stats={progress.stats}
+              actions={[acquire]}
+            />
+            {/* Between the two: a word in progress can go either way, so it gets
+                both moves rather than the one the outer panels need. */}
+            <WordPanel
+              standing="learning"
+              title="En cours"
+              words={learning}
+              empty="Un mot réussi au moins une fois, mais pas encore assez souvent d'affilée, attend ici."
+              onSpeak={speak}
+              stats={progress.stats}
+              actions={[acquire, sendBack]}
             />
             <WordPanel
+              standing="known"
               title="Connus"
               words={known}
               empty={`Réussis un mot ${KNOWN_STREAK} séries de suite pour le voir arriver ici.`}
               onSpeak={speak}
-              action={{
-                icon: <RotateCcwIcon />,
-                label: (word) => `Remettre ${word.korean} à revoir`,
-                run: (id) => void send({ review: id }),
-              }}
+              stats={progress.stats}
+              actions={[sendBack]}
             />
           </div>
 
@@ -268,30 +288,43 @@ function Count({
   )
 }
 
-/** One standing — the words in it, and the single move out of it. */
+/** A move a learner can make on a word by hand, from a panel. */
+type PanelAction = {
+  icon: React.ReactNode
+  label: (word: Word) => string
+  run: (id: string) => void
+}
+
+/** One standing — the words in it, and the moves out of it. */
 function WordPanel({
+  standing,
   title,
   words,
   empty,
   onSpeak,
-  action,
+  stats,
+  actions,
 }: {
+  standing: StandingKey
   title: string
   words: Word[]
   empty: string
   onSpeak: (text: string) => void
-  action: {
-    icon: React.ReactNode
-    label: (word: Word) => string
-    run: (id: string) => void
-  }
+  stats: Record<string, WordStat>
+  actions: PanelAction[]
 }) {
+  const { Icon, ink, badge } = STANDING[standing]
   return (
     <Card>
       <CardContent className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold">{title}</h3>
-          <Badge variant="secondary">{words.length}</Badge>
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+            <Icon className={cn("size-4 shrink-0", ink)} />
+            {title}
+          </h3>
+          <Badge variant="secondary" className={badge}>
+            {words.length}
+          </Badge>
         </div>
         {words.length === 0 ? (
           <p className="text-sm text-pretty text-muted-foreground">{empty}</p>
@@ -310,6 +343,16 @@ function WordPanel({
                     {word.translation}
                   </span>
                 </div>
+                {/* Only "en cours" has a distance left to run: on the other two
+                    panels the standing already says where the streak stands. */}
+                {standing === "learning" && (
+                  <span
+                    className={cn("text-xs tabular-nums", ink)}
+                    title={`${stats[word.id]?.streak ?? 0} réussite(s) d'affilée sur les ${KNOWN_STREAK} qu'il faut`}
+                  >
+                    {stats[word.id]?.streak ?? 0}/{KNOWN_STREAK}
+                  </span>
+                )}
                 <Button
                   variant="ghost"
                   size="icon-sm"
@@ -318,14 +361,17 @@ function WordPanel({
                 >
                   <Volume2Icon />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={action.label(word)}
-                  onClick={() => action.run(word.id)}
-                >
-                  {action.icon}
-                </Button>
+                {actions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={action.label(word)}
+                    onClick={() => action.run(word.id)}
+                  >
+                    {action.icon}
+                  </Button>
+                ))}
               </li>
             ))}
           </ul>

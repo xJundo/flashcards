@@ -2,14 +2,21 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { PencilIcon, PlusIcon, SearchIcon, TrashIcon } from "lucide-react"
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ChevronsUpDownIcon,
+  PencilIcon,
+  PlusIcon,
+  SearchIcon,
+  TrashIcon,
+} from "lucide-react"
 
 import { SpeakButton } from "@/components/speak-button"
 import { WordFormDialog } from "@/components/word-form-dialog"
 import {
   STANDING,
   StandingBadge,
-  StandingSummary,
   standingKey,
 } from "@/components/word-standing"
 import { Button } from "@/components/ui/button"
@@ -33,7 +40,27 @@ import { toast } from "@/components/ui/toast"
 import { api } from "@/lib/api"
 import { useCourseProgress } from "@/lib/progress"
 import { cn } from "@/lib/utils"
-import type { Word } from "@/lib/types"
+import type { Word, WordStat } from "@/lib/types"
+
+/** Columns a learner can order the list by. */
+type SortKey = "korean" | "romanization" | "translation" | "standing"
+
+type Sort = { key: SortKey; dir: "asc" | "desc" }
+
+/**
+ * Where a column starts when it is first clicked. Words are read from A, but a
+ * progression is read from what is left to learn — so the first click brings up
+ * the words needing work, and the acquired ones are one click further.
+ */
+const FIRST_DIR: Record<SortKey, "asc" | "desc"> = {
+  korean: "asc",
+  romanization: "asc",
+  translation: "asc",
+  standing: "asc",
+}
+
+/** Ascending: never seen, then to review, then in progress, then acquired. */
+const STANDING_RANK = { new: 0, review: 1, learning: 2, known: 3 }
 
 export function WordTable({
   courseId,
@@ -51,6 +78,7 @@ export function WordTable({
   const router = useRouter()
   const { progress } = useCourseProgress()
   const [query, setQuery] = React.useState("")
+  const [sort, setSort] = React.useState<Sort | null>(null)
   const [editing, setEditing] = React.useState<Word | null>(null)
   const [deleting, setDeleting] = React.useState<string | null>(null)
 
@@ -64,6 +92,29 @@ export function WordTable({
         .includes(needle)
     )
   }, [query, words])
+
+  // Unsorted means the lesson's own order, which is an order too — it is what
+  // the third click on a header goes back to.
+  const rows = React.useMemo(() => {
+    if (!sort) return filtered
+    const stats = progress.stats
+    const sign = sort.dir === "asc" ? 1 : -1
+    // `sort` is stable, and `filtered` is in lesson order: equal figures keep it.
+    return [...filtered].sort(
+      (a, b) => sign * compare(sort.key, a, b, stats[a.id], stats[b.id])
+    )
+  }, [filtered, progress.stats, sort])
+
+  // Three clicks make a round trip: chosen direction, the other one, then off.
+  function toggleSort(key: SortKey) {
+    setSort((current) => {
+      if (current?.key !== key) return { key, dir: FIRST_DIR[key] }
+      if (current.dir === FIRST_DIR[key]) {
+        return { key, dir: FIRST_DIR[key] === "asc" ? "desc" : "asc" }
+      }
+      return null
+    })
+  }
 
   async function remove(word: Word) {
     setDeleting(word.id)
@@ -107,7 +158,7 @@ export function WordTable({
         )}
       </div>
 
-      {filtered.length === 0 ? (
+      {rows.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -129,7 +180,7 @@ export function WordTable({
         <>
           {/* Four columns never fit a phone, so a word becomes a block there. */}
           <ul className="flex flex-col divide-y rounded-xl border sm:hidden">
-            {filtered.map((word) => (
+            {rows.map((word) => (
               <li
                 key={word.id}
                 className={cn(
@@ -157,10 +208,10 @@ export function WordTable({
                     </span>
                   )}
                   {tracked && (
-                    <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <StandingBadge stat={progress.stats[word.id]} />
-                      <StandingSummary stat={progress.stats[word.id]} />
-                    </span>
+                    <StandingBadge
+                      stat={progress.stats[word.id]}
+                      className="mt-2 self-start"
+                    />
                   )}
                 </div>
                 {editable && (
@@ -195,11 +246,35 @@ export function WordTable({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12" />
-                  <TableHead className="w-[22%]">Coréen</TableHead>
-                  <TableHead className="w-[18%]">Prononciation</TableHead>
-                  <TableHead>Traduction</TableHead>
+                  <SortHead
+                    label="Coréen"
+                    sortKey="korean"
+                    sort={sort}
+                    onSort={toggleSort}
+                    className="w-[18%]"
+                  />
+                  <SortHead
+                    label="Prononciation"
+                    sortKey="romanization"
+                    sort={sort}
+                    onSort={toggleSort}
+                    className="w-[18%]"
+                  />
+                  <SortHead
+                    label="Traduction"
+                    sortKey="translation"
+                    sort={sort}
+                    onSort={toggleSort}
+                  />
                   {tracked && (
-                    <TableHead className="w-[22%]">Progression</TableHead>
+                    <SortHead
+                      label="Progression"
+                      hint="Où en est le mot, et la série de réussites en cours"
+                      sortKey="standing"
+                      sort={sort}
+                      onSort={toggleSort}
+                      className="w-[22%]"
+                    />
                   )}
                   {editable && (
                     <TableHead className="w-24 text-right">Actions</TableHead>
@@ -207,7 +282,7 @@ export function WordTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((word) => (
+                {rows.map((word) => (
                   <TableRow key={word.id}>
                     <TableCell
                       className={cn(
@@ -233,10 +308,7 @@ export function WordTable({
                     </TableCell>
                     {tracked && (
                       <TableCell>
-                        <div className="flex flex-col items-start gap-1">
-                          <StandingBadge stat={progress.stats[word.id]} />
-                          <StandingSummary stat={progress.stats[word.id]} />
-                        </div>
+                        <StandingBadge stat={progress.stats[word.id]} />
                       </TableCell>
                     )}
                     {editable && (
@@ -279,5 +351,75 @@ export function WordTable({
         />
       )}
     </div>
+  )
+}
+
+/** Korean sorts by its own alphabet, the rest by French rules. */
+function compare(
+  key: SortKey,
+  a: Word,
+  b: Word,
+  statA: WordStat | undefined,
+  statB: WordStat | undefined
+): number {
+  switch (key) {
+    case "korean":
+      return a.korean.localeCompare(b.korean, "ko")
+    case "romanization":
+      return a.romanization.localeCompare(b.romanization, "fr")
+    case "translation":
+      return a.translation.localeCompare(b.translation, "fr")
+    case "standing": {
+      const rank =
+        STANDING_RANK[standingKey(statA)] - STANDING_RANK[standingKey(statB)]
+      // Inside "en cours", the word closest to being acquired comes first.
+      return rank !== 0 ? rank : (statA?.streak ?? 0) - (statB?.streak ?? 0)
+    }
+  }
+}
+
+/** A column header that orders the list, and says which way it is ordered. */
+function SortHead({
+  label,
+  hint,
+  sortKey,
+  sort,
+  onSort,
+  className,
+}: {
+  label: string
+  hint?: string
+  sortKey: SortKey
+  sort: Sort | null
+  onSort: (key: SortKey) => void
+  className?: string
+}) {
+  const active = sort?.key === sortKey
+  const Arrow = !active
+    ? ChevronsUpDownIcon
+    : sort.dir === "asc"
+      ? ChevronUpIcon
+      : ChevronDownIcon
+
+  return (
+    <TableHead
+      className={cn("p-0", className)}
+      aria-sort={
+        active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"
+      }
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        title={hint ? `${hint} — cliquer pour trier` : "Cliquer pour trier"}
+        className={cn(
+          "flex h-10 w-full items-center gap-1 px-2 text-left transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset",
+          !active && "text-muted-foreground"
+        )}
+      >
+        <span className="truncate">{label}</span>
+        <Arrow className={cn("size-3.5 shrink-0", !active && "opacity-40")} />
+      </button>
+    </TableHead>
   )
 }
