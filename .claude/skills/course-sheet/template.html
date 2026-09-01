@@ -1,0 +1,215 @@
+<!--
+  Fiche de révision — base template (validated design system).
+
+  This is not meant to be rendered as-is: copy it, then replace every
+  <!-- FILL: ... --> block with real content for the course at hand, and
+  delete whichever optional sections don't apply (see SKILL.md's "Which
+  sections to use" table). Keep the CSS untouched — it is the visual
+  identity every generated sheet shares. A4, one page whenever the word
+  count allows it; two pages is the ceiling before it stops being a quick
+  "fiche" and turns into a booklet.
+-->
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 8mm 12mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: #1e2430;
+    font-size: 10.3pt;
+    line-height: 1.35;
+  }
+  /* Hangul needs an explicit CJK face — the system sans-serif above has no glyphs for it. */
+  .kr { font-family: "Noto Sans CJK KR", "Noto Sans KR", sans-serif; }
+
+  header.top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #3730a3, #4f46e5);
+    color: white;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 10px;
+  }
+  header.top .tag {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+  }
+  header.top h1 { margin: 2px 0 0; font-size: 16pt; }
+  header.top .meta { font-size: 8.5pt; opacity: 0.9; text-align: right; }
+
+  /* "L'essentiel" — always first, always one short sentence: the single rule
+     or idea a learner should keep even if they read nothing else (primacy). */
+  .essential {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: #fff7e6;
+    border: 1.5px solid #f2b705;
+    border-radius: 10px;
+    padding: 8px 14px;
+    margin-bottom: 10px;
+  }
+  .essential .icon { font-size: 20pt; }
+  .essential .body { font-size: 9.3pt; }
+  .essential b { color: #9a6b00; }
+
+  /* Two-tone rule callout — for a binary condition (vowel/consonant,
+     regular/irregular…). Not always needed; skip if the course has none. */
+  .rule-pair { display: flex; gap: 8px; margin: 6px 0; }
+  /* `min-width: 0` overrides the flex default (`min-width: auto`), which
+     otherwise refuses to shrink a flex item below its content's natural
+     width — the classic reason a flex row quietly overflows its container
+     on one side instead of wrapping. Keep this on every `flex: 1` box below. */
+  .rule-pair .box { flex: 1; min-width: 0; border-radius: 8px; padding: 6px 10px; font-size: 9pt; }
+  .rule-pair .warm { background: #fff1ee; border: 1.5px solid #f4795a; }
+  .rule-pair .cool { background: #eef4ff; border: 1.5px solid #5b7cf4; }
+  .rule-pair .label { font-weight: 700; font-size: 8.3pt; text-transform: uppercase; letter-spacing: .04em; }
+  .warm .label { color: #c1401d; }
+  .cool .label { color: #2748c9; }
+  .rule-pair .kr-big { font-size: 12pt; font-weight: 700; }
+
+  /* One themed group of words = one .group. Rotate through the four accent
+     colors below in the order the groups appear — don't invent new ones,
+     that is what keeps every sheet feeling like the same series. */
+  section.group { border-radius: 9px; margin-bottom: 5px; overflow: hidden; border: 1px solid #e3e6ee; }
+  section.group .head { display: flex; align-items: center; gap: 6px; padding: 5px 10px; font-weight: 700; font-size: 9.3pt; color: white; }
+  section.group.orange .head { background: #e8642c; }
+  section.group.blue   .head { background: #3457d5; }
+  section.group.purple .head { background: #7b3fd6; }
+  section.group.teal   .head { background: #128f76; }
+  /* A 5th group (rare) can reuse orange — never add a new hue on the fly. */
+  section.group .mnemo { font-size: 8pt; font-style: italic; color: #555; padding: 5px 10px 0; }
+
+  /* `table-layout: fixed` makes the column widths below absolute: a table in
+     the default `auto` layout resizes columns to fit whatever content is
+     widest, which can push the whole table past its 100% container — fixed
+     layout keeps it inside the page no matter what a cell holds, wrapping
+     instead of overflowing. */
+  table.words { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 9pt; }
+  table.words td { padding: 3px 10px; border-top: 1px solid #f0f1f5; vertical-align: top; overflow-wrap: break-word; }
+  table.words tr:first-child td { border-top: none; }
+  table.words .ic { width: 22px; padding-right: 0; }
+  table.words .k { font-weight: 700; width: 28%; }
+  table.words .r { color: #8a8f9c; font-style: italic; width: 26%; }
+  table.words .t { width: 46%; }
+  table.words .note { font-size: 7.6pt; color: #777; display: block; margin-top: 1px; }
+
+  /* Dual coding for a concrete word — a person, place, object, food, animal…
+     — never for a grammar particle or abstract term. One SVG per row at
+     most, picked from icons.md; never both an icon and an emoji on the same
+     row. Color follows the group's own accent via the `.group` ancestor. */
+  .icon-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 6px;
+    background: #eef1fa; color: #3457d5;
+  }
+  .icon-badge svg { width: 13px; height: 13px; }
+  .group.orange .icon-badge { background: #ffe4d9; color: #c1401d; }
+  .group.blue   .icon-badge { background: #e1e8fd; color: #2748c9; }
+  .group.purple .icon-badge { background: #ece1fb; color: #6527ad; }
+  .group.teal   .icon-badge { background: #d9f5ee; color: #0f7a64; }
+
+  /* Side-by-side contrast pair, inside a .group — for exactly two forms that
+     a learner confuses, shown at once so the difference is visual, not read. */
+  .contrast { display: flex; gap: 8px; padding: 6px 10px 8px; }
+  .contrast .card { flex: 1; min-width: 0; border-radius: 7px; padding: 6px 8px; font-size: 8.6pt; }
+  .contrast .card.a { background: #f3ecff; }
+  .contrast .card.b { background: #eafaf5; }
+  .contrast .card b.kr-big { display: block; font-size: 11pt; }
+
+  /* "Teste-toi" — always last: closes on a retrieval-practice prompt
+     (recency) instead of just trailing off after the last table. */
+  .test-yourself {
+    display: flex; align-items: center; gap: 10px;
+    background: #eefcf3; border: 1.5px dashed #34a870; border-radius: 10px;
+    padding: 8px 14px; margin-top: 8px; font-size: 8.6pt;
+  }
+  .test-yourself .icon { font-size: 18pt; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <div class="tag">Fiche de révision · Coréen</div>
+    <h1><!-- FILL: course title, verbatim from the JSON --></h1>
+  </div>
+  <div class="meta">📅 <!-- FILL: date, written out in French, e.g. "4 septembre 2026" --></div>
+</header>
+
+<div class="essential">
+  <div class="icon">🎯</div>
+  <div class="body">
+    <b>L'essentiel en 10 secondes —</b>
+    <!-- FILL: the ONE rule/idea that matters most in this lesson, one sentence,
+         with the key Korean forms in <b class="kr">…</b> so they stand out. -->
+  </div>
+</div>
+
+<!-- FILL: 0–1 rule-pair block, only if there's a genuine two-way condition
+     to contrast up front (vowel harmony, regular vs irregular…). Example:
+<div class="rule-pair">
+  <div class="box warm"><span class="label">condition A</span><br><span class="kr-big">form</span> — one-line explanation</div>
+  <div class="box cool"><span class="label">condition B</span><br><span class="kr-big">form</span> — one-line explanation</div>
+</div>
+-->
+
+<!-- FILL: repeat this <section class="group COLOR"> block per group of
+     related words — grammar pattern, theme, or function. Rotate orange →
+     blue → purple → teal in order. Drop the .mnemo line if the group is
+     plain vocabulary with no rule behind it. -->
+<section class="group orange">
+  <div class="head">🧩 <!-- FILL: group title with one emoji that fits its idea --></div>
+  <div class="mnemo"><!-- FILL: the memory hook for this group, one sentence --></div>
+  <table class="words">
+    <!-- FILL: one <tr> per word. Put contraction/derivation notes as a
+         <span class="note"> inside the .t cell, like:
+    <tr><td class="k kr">갔어요</td><td class="r">ga sseo yo</td><td class="t">je suis allé(e) <span class="note">가+았어요 → 갔어요</span></td></tr>
+
+         The icon column is a per-TABLE choice, not per-row: every <tr> in a
+         table needs the same cell count or the columns stop lining up. If at
+         least one word in this group is concrete enough for an icon
+         (icons.md), give EVERY row in this table a leading .ic cell — empty
+         for the rows that have none, never omitted:
+    <tr>
+      <td class="ic"><span class="icon-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">…</svg></span></td>
+      <td class="k kr">친구</td><td class="r">chin gu</td><td class="t">ami(e)</td>
+    </tr>
+    <tr><td class="ic"></td><td class="k kr">매일</td><td class="r">mae il</td><td class="t">chaque jour <span class="note">un mot d'usage, pas d'objet concret</span></td></tr>
+
+         If nothing in the group is illustratable, skip the .ic column for
+         that whole table — back to the plain 3-cell rows above.
+    -->
+  </table>
+</section>
+
+<!-- FILL: a "contrast" mini-section for exactly two confusable forms, nested
+     in its own .group when the pair is the whole point of a rule (see the
+     .rule-pair alternative above for a lighter version of the same idea):
+<section class="group purple">
+  <div class="head">⚖️ Cas spécial — …</div>
+  <div class="mnemo">…</div>
+  <div class="contrast">
+    <div class="card a"><span class="label">condition A</span><b class="kr-big">example</b>translation <span class="note">why</span></div>
+    <div class="card b"><span class="label">condition B</span><b class="kr-big">example</b>translation <span class="note">why</span></div>
+  </div>
+</section>
+-->
+
+<div class="test-yourself">
+  <div class="icon">🔁</div>
+  <div>
+    <b>Teste-toi :</b> cache la colonne française et redis chaque ligne à voix haute, puis inverse. Reviens t'entraîner sur l'appli dès qu'un mot te résiste deux fois.
+  </div>
+</div>
+
+</body>
+</html>

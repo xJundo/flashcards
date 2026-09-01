@@ -10,6 +10,7 @@ import {
 import { CourseFinishers } from "@/components/course-finishers"
 import { CourseFormDialog } from "@/components/course-form-dialog"
 import { CoursePractice } from "@/components/course-practice"
+import { CourseSheetSection } from "@/components/course-sheet"
 import { FavoriteButton } from "@/components/favorite-button"
 import { ShareDialog } from "@/components/share-dialog"
 import { WordTable } from "@/components/word-table"
@@ -114,9 +115,11 @@ export default async function CoursePage({ params }: Props) {
         <section className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold tracking-tight">Réviser</h2>
           <CoursePractice
+            courseId={course.id}
             words={course.words}
             signedIn={Boolean(user)}
             completedAt={viewer.completedAt}
+            hasSheet={course.hasSheet}
           />
           {/* Public, so it shows for a signed-out reader too — it is the one
               thing about anyone's progress that everyone gets to see. */}
@@ -126,6 +129,17 @@ export default async function CoursePage({ params }: Props) {
             wordCount={course.words.length}
           />
         </section>
+
+        {(course.hasSheet || editable) && (
+          <>
+            <Separator />
+            <CourseSheetSection
+              courseId={course.id}
+              hasSheet={course.hasSheet}
+              editable={editable}
+            />
+          </>
+        )}
 
         <Separator />
 

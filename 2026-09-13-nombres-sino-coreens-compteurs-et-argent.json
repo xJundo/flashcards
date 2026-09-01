@@ -1,0 +1,156 @@
+{
+  "title": "Nombres sino-coréens, compteurs et argent",
+  "date": "2026-09-13",
+  "words": [
+    {
+      "korean": "일",
+      "romanization": "il",
+      "translation": "1 (un)",
+      "note": "Premier chiffre sino-coréen (d'origine chinoise), différent des chiffres natifs (하나/둘/셋) déjà vus. Sert pour l'argent, les dates, les numéros de téléphone."
+    },
+    {
+      "korean": "이",
+      "romanization": "i",
+      "translation": "2 (deux)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "삼",
+      "romanization": "sam",
+      "translation": "3 (trois)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "사",
+      "romanization": "sa",
+      "translation": "4 (quatre)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "오",
+      "romanization": "o",
+      "translation": "5 (cinq)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "육",
+      "romanization": "yuk",
+      "translation": "6 (six)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "칠",
+      "romanization": "chil",
+      "translation": "7 (sept)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "팔",
+      "romanization": "pal",
+      "translation": "8 (huit)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "구",
+      "romanization": "gu",
+      "translation": "9 (neuf)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "십",
+      "romanization": "sip",
+      "translation": "10 (dix)",
+      "note": "Chiffre sino-coréen."
+    },
+    {
+      "korean": "백",
+      "romanization": "baek",
+      "translation": "100 (cent)",
+      "note": "On ne dit jamais 일백 pour 100, juste 백."
+    },
+    {
+      "korean": "천",
+      "romanization": "cheon",
+      "translation": "1000 (mille)",
+      "note": "Jamais 일천, juste 천."
+    },
+    {
+      "korean": "만",
+      "romanization": "man",
+      "translation": "10 000 (dix mille)",
+      "note": "Piège important : les Coréens comptent par tranches de 10 000 (만) et non de 1000. 100 000 = 십만 (10×만), pas 100천."
+    },
+    {
+      "korean": "원",
+      "romanization": "won",
+      "translation": "won (monnaie coréenne)",
+      "note": "Toujours après le nombre sino-coréen : 오천 원 = 5000 wons."
+    },
+    {
+      "korean": "개",
+      "romanization": "gae",
+      "translation": "compteur générique pour les objets",
+      "note": "S'utilise avec les nombres NATIFS (pas les sino-coréens), qui changent de forme devant un compteur."
+    },
+    {
+      "korean": "한 개",
+      "romanization": "han gae",
+      "translation": "1 objet (un objet)",
+      "note": "하나 (un, natif) devient 한 devant un compteur."
+    },
+    {
+      "korean": "두 개",
+      "romanization": "du gae",
+      "translation": "2 objets (deux objets)",
+      "note": "둘 (deux, natif) devient 두 devant un compteur."
+    },
+    {
+      "korean": "세 개",
+      "romanization": "se gae",
+      "translation": "3 objets (trois objets)",
+      "note": "셋 (trois, natif) devient 세 devant un compteur."
+    },
+    {
+      "korean": "명",
+      "romanization": "myeong",
+      "translation": "compteur de personnes",
+      "note": "Aussi avec les nombres natifs : 한 명, 두 명 (une personne, deux personnes)."
+    },
+    {
+      "korean": "살",
+      "romanization": "sal",
+      "translation": "compteur d'âge (années)",
+      "note": "Nombres natifs : 한 살, 두 살... mais 20 ans = 스무 살 (forme spéciale, pas 스물 살)."
+    },
+    {
+      "korean": "얼마예요?",
+      "romanization": "eol ma ye yo",
+      "translation": "Combien ça coûte ?",
+      "note": ""
+    },
+    {
+      "korean": "이거 얼마예요?",
+      "romanization": "i geo eol ma ye yo",
+      "translation": "Combien coûte ça ?",
+      "note": "이거 = ceci/ça."
+    },
+    {
+      "korean": "주세요",
+      "romanization": "ju se yo",
+      "translation": "donnez-moi / s'il vous plaît",
+      "note": "S'ajoute après un nom pour demander poliment quelque chose."
+    },
+    {
+      "korean": "사과 세 개 주세요",
+      "romanization": "sa gwa se gae ju se yo",
+      "translation": "Trois pommes s'il vous plaît",
+      "note": "Structure : Objet + nombre natif + compteur + 주세요."
+    },
+    {
+      "korean": "오천 원이에요",
+      "romanization": "o cheon wo ni e yo",
+      "translation": "Ça fait 5000 wons",
+      "note": "Les prix utilisent toujours les nombres sino-coréens, jamais les nombres natifs."
+    }
+  ]
+}

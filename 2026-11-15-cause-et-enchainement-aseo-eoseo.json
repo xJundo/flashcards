@@ -1,0 +1,96 @@
+{
+  "title": "Cause et enchaînement : -아서/어서",
+  "date": "2026-11-15",
+  "words": [
+    {
+      "korean": "아서 / 어서",
+      "romanization": "a seo / eo seo",
+      "translation": "parce que / donc / et ensuite",
+      "note": "Même harmonie vocalique que 아요/어요 mais avec 서 à la place. Exprime un lien logique (cause) ou une séquence liée, contrairement à 고 qui est neutre."
+    },
+    {
+      "korean": "배고파요",
+      "romanization": "bae go pa yo",
+      "translation": "j'ai faim",
+      "note": "Présent poli de 배고프다 (avoir faim, infinitif). Irrégulier en 으."
+    },
+    {
+      "korean": "배고파서 밥을 먹어요",
+      "romanization": "bae go pa seo ba beul meo geo yo",
+      "translation": "J'ai faim donc je mange",
+      "note": ""
+    },
+    {
+      "korean": "배불러요",
+      "romanization": "bae bul leo yo",
+      "translation": "je suis rassasié(e)",
+      "note": "Présent poli de 배부르다 (être rassasié, infinitif). Irrégulier en 르 (comme 다르다)."
+    },
+    {
+      "korean": "피곤하다",
+      "romanization": "pi gon ha da",
+      "translation": "être fatigué",
+      "note": ""
+    },
+    {
+      "korean": "일찍",
+      "romanization": "il jjik",
+      "translation": "tôt",
+      "note": ""
+    },
+    {
+      "korean": "늦게",
+      "romanization": "neut gge",
+      "translation": "tard",
+      "note": ""
+    },
+    {
+      "korean": "피곤해서 일찍 잤어요",
+      "romanization": "pi gon hae seo il jjik ja sseo yo",
+      "translation": "J'étais fatigué donc je me suis couché tôt",
+      "note": ""
+    },
+    {
+      "korean": "늦다",
+      "romanization": "neut dda",
+      "translation": "être en retard",
+      "note": ""
+    },
+    {
+      "korean": "늦어서 미안해요",
+      "romanization": "neu jeo seo mi an hae yo",
+      "translation": "Désolé d'être en retard",
+      "note": ""
+    },
+    {
+      "korean": "커피",
+      "romanization": "keo pi",
+      "translation": "café",
+      "note": ""
+    },
+    {
+      "korean": "친구를 만나서 커피를 마셨어요",
+      "romanization": "chin gu reul man na seo keo pi reul ma syeo sseo yo",
+      "translation": "J'ai retrouvé un ami et on a bu un café",
+      "note": "아서/어서 = les deux actions sont liées logiquement, à la différence de 고 qui les listerait juste."
+    },
+    {
+      "korean": "시간",
+      "romanization": "si gan",
+      "translation": "temps / heure (durée)",
+      "note": ""
+    },
+    {
+      "korean": "못",
+      "romanization": "mot",
+      "translation": "ne pas pouvoir (incapacité)",
+      "note": "Se place devant le verbe comme 안, mais exprime une impossibilité plutôt qu'un simple refus. Approfondi dans une leçon future."
+    },
+    {
+      "korean": "시간이 없어서 못 갔어요",
+      "romanization": "si ga ni eop sseo seo mot ga sseo yo",
+      "translation": "Je n'ai pas pu y aller car je n'avais pas le temps",
+      "note": ""
+    }
+  ]
+}

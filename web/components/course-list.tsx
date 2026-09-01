@@ -17,6 +17,7 @@ import {
 
 import { CourseFormDialog } from "@/components/course-form-dialog"
 import { StandingBar } from "@/components/course-meter"
+import { CourseSheetDrawer } from "@/components/course-sheet"
 import { FavoriteButton } from "@/components/favorite-button"
 import { ImportDialog } from "@/components/import-dialog"
 import { STANDING, scoreKey } from "@/components/word-standing"
@@ -295,6 +296,17 @@ function CourseCard({
         </CardTitle>
         {/* Above the title's overlay, or the link would swallow both. */}
         <CardAction className="relative z-10 flex items-center gap-0.5">
+          {course.hasSheet && (
+            <CourseSheetDrawer courseId={course.id} title={course.title}>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Voir la fiche de ${course.title}`}
+              >
+                <BookOpenIcon />
+              </Button>
+            </CourseSheetDrawer>
+          )}
           {signedIn && (
             <FavoriteButton
               courseId={course.id}

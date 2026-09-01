@@ -49,15 +49,20 @@ const FRONT_LABEL: Record<string, string> = {
  * happened. The revision itself happens over the page, in {@link SeriesDialog}.
  */
 export function CoursePractice({
+  courseId,
   words,
   signedIn,
   completedAt,
+  hasSheet,
 }: {
+  courseId: string
   words: Word[]
   /** Progress is only recorded for an account; anonymous revision is untracked. */
   signedIn: boolean
   /** When the viewer acquired every word, ISO — as the server knew it. */
   completedAt: string | null
+  /** Whether the lesson has a revision sheet the series dialog can open. */
+  hasSheet: boolean
 }) {
   const { speak } = useKoreanSpeech()
   const { progress, send } = useCourseProgress()
@@ -199,6 +204,8 @@ export function CoursePractice({
       <SeriesDialog
         open={mode !== null}
         mode={mode ?? "practice"}
+        courseId={courseId}
+        hasSheet={hasSheet}
         words={words}
         stats={progress.stats}
         onOpenChange={(open) => setMode(open ? mode : null)}

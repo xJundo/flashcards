@@ -47,7 +47,9 @@ export function useKoreanSpeech(): SpeechState {
 
   const speak = React.useCallback(
     (text: string) => {
-      const value = text.trim()
+      // Strip arrows used in conjugation notes (e.g. "오다 → 와요"): they get
+      // read aloud as "flèche" instead of being skipped.
+      const value = text.replace(/[→←↔⇒⇐⇔]/g, " ").replace(/\s+/g, " ").trim()
       if (!value) return
       stop()
 

@@ -270,6 +270,7 @@ export function toCourse(
     createdAt: now,
     updatedAt: now,
     words: parsed.words,
+    hasSheet: false,
   }
 }
 

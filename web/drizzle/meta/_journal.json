@@ -36,6 +36,13 @@
       "when": 1785751947328,
       "tag": "0004_favorites_completions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788265408043,
+      "tag": "0005_course_sheets",
+      "breakpoints": true
     }
   ]
 }

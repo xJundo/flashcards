@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import {
+  BookOpenIcon,
   CheckIcon,
   PlayIcon,
   RepeatIcon,
@@ -10,6 +11,7 @@ import {
   XIcon,
 } from "lucide-react"
 
+import { CourseSheetDrawer } from "@/components/course-sheet"
 import { Flashcard, type Side } from "@/components/flashcard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -91,6 +93,8 @@ function buildDeck(
 export function SeriesDialog({
   open,
   mode,
+  courseId,
+  hasSheet,
   words,
   stats,
   onOpenChange,
@@ -98,6 +102,9 @@ export function SeriesDialog({
 }: {
   open: boolean
   mode: SeriesMode
+  courseId: string
+  /** Whether the lesson has a revision sheet to open from the header. */
+  hasSheet: boolean
   words: Word[]
   /** Where each word stands, to draw a deck from one standing. */
   stats: Record<string, WordStat>
@@ -108,6 +115,8 @@ export function SeriesDialog({
   const [settings, update] = useSettings()
   /** `null` until the learner starts: the launch screen is the first phase. */
   const [run, setRun] = React.useState<Run | null>(null)
+  /** Open, the card shortcuts must yield — Space/arrows read the sheet instead. */
+  const [sheetOpen, setSheetOpen] = React.useState(false)
 
   // Guards the one write each deck is entitled to, whether it comes from
   // reaching the last card or from closing the popup part-way.
@@ -261,7 +270,7 @@ export function SeriesDialog({
   }, [autoplay, current, flipped, speak])
 
   React.useEffect(() => {
-    if (!current) return
+    if (!current || sheetOpen) return
     const card = current
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target
@@ -311,7 +320,7 @@ export function SeriesDialog({
     // so a listener on the bubble phase would never see a single shortcut.
     window.addEventListener("keydown", onKeyDown, true)
     return () => window.removeEventListener("keydown", onKeyDown, true)
-  }, [answer, current, flip, previous, speak])
+  }, [answer, current, flip, previous, sheetOpen, speak])
 
   const failed = React.useMemo(
     () =>
@@ -348,6 +357,19 @@ export function SeriesDialog({
             )}
           </Badge>
           <DialogTitle className="sr-only">{title}</DialogTitle>
+
+          {hasSheet && (
+            <CourseSheetDrawer
+              courseId={courseId}
+              open={sheetOpen}
+              onOpenChange={setSheetOpen}
+            >
+              <Button variant="outline" size="sm" className="shrink-0">
+                <BookOpenIcon data-icon="inline-start" />
+                <span className="max-sm:hidden">Voir le cours</span>
+              </Button>
+            </CourseSheetDrawer>
+          )}
 
           {run && (
             <div className="flex min-w-28 flex-1 items-center gap-3 sm:min-w-40">

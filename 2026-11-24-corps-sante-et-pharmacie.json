@@ -1,0 +1,120 @@
+{
+  "title": "Corps, santé et pharmacie",
+  "date": "2026-11-24",
+  "words": [
+    {
+      "korean": "몸",
+      "romanization": "mom",
+      "translation": "corps",
+      "note": ""
+    },
+    {
+      "korean": "머리",
+      "romanization": "meo ri",
+      "translation": "tête / cheveux",
+      "note": ""
+    },
+    {
+      "korean": "배",
+      "romanization": "bae",
+      "translation": "ventre",
+      "note": "Homophone de poire et bateau (déjà vu) — ici troisième sens, le contexte tranche toujours."
+    },
+    {
+      "korean": "손",
+      "romanization": "son",
+      "translation": "main",
+      "note": ""
+    },
+    {
+      "korean": "발",
+      "romanization": "bal",
+      "translation": "pied",
+      "note": ""
+    },
+    {
+      "korean": "눈",
+      "romanization": "nun",
+      "translation": "œil",
+      "note": "Homophone de 눈 (neige) — même orthographe et prononciation, contexte seul distingue."
+    },
+    {
+      "korean": "코",
+      "romanization": "ko",
+      "translation": "nez",
+      "note": ""
+    },
+    {
+      "korean": "입",
+      "romanization": "ip",
+      "translation": "bouche",
+      "note": ""
+    },
+    {
+      "korean": "귀",
+      "romanization": "gwi",
+      "translation": "oreille",
+      "note": ""
+    },
+    {
+      "korean": "아파요",
+      "romanization": "a pa yo",
+      "translation": "j'ai mal / je suis malade (il ou elle a mal, est malade)",
+      "note": "Présent poli de 아프다 (avoir mal/être malade, infinitif). Irrégulier en 으."
+    },
+    {
+      "korean": "배가 아파요",
+      "romanization": "bae ga a pa yo",
+      "translation": "J'ai mal au ventre",
+      "note": "Partie du corps + 가/이 + 아파요."
+    },
+    {
+      "korean": "머리가 아파요",
+      "romanization": "meo ri ga a pa yo",
+      "translation": "J'ai mal à la tête",
+      "note": ""
+    },
+    {
+      "korean": "병원",
+      "romanization": "byeong won",
+      "translation": "hôpital",
+      "note": ""
+    },
+    {
+      "korean": "약국",
+      "romanization": "yak gguk",
+      "translation": "pharmacie",
+      "note": ""
+    },
+    {
+      "korean": "약",
+      "romanization": "yak",
+      "translation": "médicament",
+      "note": ""
+    },
+    {
+      "korean": "감기",
+      "romanization": "gam gi",
+      "translation": "rhume",
+      "note": ""
+    },
+    {
+      "korean": "걸리다",
+      "romanization": "geol li da",
+      "translation": "attraper (une maladie) / prendre (du temps)",
+      "note": ""
+    },
+    {
+      "korean": "감기에 걸렸어요",
+      "romanization": "gam gi e geol lyeo sseo yo",
+      "translation": "J'ai attrapé un rhume",
+      "note": ""
+    },
+    {
+      "korean": "드세요",
+      "romanization": "deu se yo",
+      "translation": "mangez / prenez (forme polie/honorifique de 먹다)",
+      "note": "Forme de respect qu'on entend souvent chez le médecin ou le pharmacien : 약 드세요 = prenez le médicament."
+    }
+  ]
+}

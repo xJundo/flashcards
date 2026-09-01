@@ -1,0 +1,120 @@
+{
+  "title": "Famille, âge et professions",
+  "date": "2026-12-03",
+  "words": [
+    {
+      "korean": "가족",
+      "romanization": "ga jok",
+      "translation": "famille",
+      "note": ""
+    },
+    {
+      "korean": "아버지",
+      "romanization": "a beo ji",
+      "translation": "père (registre formel/neutre)",
+      "note": ""
+    },
+    {
+      "korean": "아빠",
+      "romanization": "a ppa",
+      "translation": "papa (registre familier)",
+      "note": ""
+    },
+    {
+      "korean": "어머니",
+      "romanization": "eo meo ni",
+      "translation": "mère (registre formel/neutre)",
+      "note": ""
+    },
+    {
+      "korean": "엄마",
+      "romanization": "eom ma",
+      "translation": "maman (registre familier)",
+      "note": ""
+    },
+    {
+      "korean": "아들",
+      "romanization": "a deul",
+      "translation": "fils",
+      "note": ""
+    },
+    {
+      "korean": "딸",
+      "romanization": "ttal",
+      "translation": "fille",
+      "note": "Homophone de 딸기 (fraise) sans le 기."
+    },
+    {
+      "korean": "동생",
+      "romanization": "dong saeng",
+      "translation": "petit frère / petite sœur (cadet)",
+      "note": "Un seul mot pour les deux, le genre se précise si besoin (남동생/여동생)."
+    },
+    {
+      "korean": "나이",
+      "romanization": "na i",
+      "translation": "âge",
+      "note": ""
+    },
+    {
+      "korean": "몇 살이에요?",
+      "romanization": "myeot sa ri e yo",
+      "translation": "Quel âge as-tu ?",
+      "note": "Compteur 살 avec nombre natif."
+    },
+    {
+      "korean": "저는 스물다섯 살이에요",
+      "romanization": "jeo neun seu mul da seot sa ri e yo",
+      "translation": "J'ai 25 ans",
+      "note": "20 = 스무 seulement quand c'est exactement 20 (스무 살). Pour 21-29, on garde 스물 (스물다섯 = 20+5)."
+    },
+    {
+      "korean": "직업",
+      "romanization": "ji geop",
+      "translation": "métier / profession",
+      "note": ""
+    },
+    {
+      "korean": "회사원",
+      "romanization": "hoe sa won",
+      "translation": "employé(e) de bureau",
+      "note": ""
+    },
+    {
+      "korean": "의사",
+      "romanization": "ui sa",
+      "translation": "médecin",
+      "note": ""
+    },
+    {
+      "korean": "간호사",
+      "romanization": "gan ho sa",
+      "translation": "infirmier / infirmière",
+      "note": ""
+    },
+    {
+      "korean": "무슨 일 하세요?",
+      "romanization": "mu seun il ha se yo",
+      "translation": "Que faites-vous comme travail ?",
+      "note": "세요 = forme honorifique de politesse (approfondie dans une prochaine leçon), déjà utile à reconnaître à l'oral."
+    },
+    {
+      "korean": "저는 회사원이에요",
+      "romanization": "jeo neun hoe sa wo ni e yo",
+      "translation": "Je suis employé(e) de bureau",
+      "note": ""
+    },
+    {
+      "korean": "결혼했어요",
+      "romanization": "gyeol hon hae sseo yo",
+      "translation": "je suis marié(e) (litt. je me suis marié(e))",
+      "note": "Passé de 결혼하다 (se marier, infinitif). S'utilise pour dire l'état civil actuel, pas juste l'événement passé — comme en anglais 'I am married'."
+    },
+    {
+      "korean": "미혼",
+      "romanization": "mi hon",
+      "translation": "célibataire",
+      "note": ""
+    }
+  ]
+}

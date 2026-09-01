@@ -26,5 +26,4 @@
 20. ajouter des cours en favori [x]
 21. avoir une page de stats pour voir son évolution (nombre de mots appris, nombre de cours suivis, etc). [x]
 22. avoir une info comme quuoi qu'on a réussi le cours (100% des mots connus), sur la page d'accueil et sur la page du cours, plus la liste publique de ceux qui l'ont réussi. [x]
-
-
+23. Avoir une section markdown / pdf qui explique le cours.

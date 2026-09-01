@@ -1,0 +1,126 @@
+{
+  "title": "L'heure, les jours et les dates",
+  "date": "2026-09-22",
+  "words": [
+    {
+      "korean": "시",
+      "romanization": "si",
+      "translation": "heure (compteur)",
+      "note": "Utilise les nombres NATIFS : 한 시, 두 시, 세 시... (une heure, deux heures)."
+    },
+    {
+      "korean": "분",
+      "romanization": "bun",
+      "translation": "minute (compteur)",
+      "note": "Utilise les nombres SINO-COREENS : 오 분, 십 분 (5 minutes, 10 minutes)."
+    },
+    {
+      "korean": "몇 시예요?",
+      "romanization": "myeot si ye yo",
+      "translation": "Quelle heure est-il ?",
+      "note": ""
+    },
+    {
+      "korean": "두 시 삼십 분이에요",
+      "romanization": "du si sam sip bu ni e yo",
+      "translation": "Il est deux heures trente",
+      "note": "Mélange des deux systèmes : heure en natif (두 시) + minutes en sino-coréen (삼십 분)."
+    },
+    {
+      "korean": "반",
+      "romanization": "ban",
+      "translation": "demi",
+      "note": "두 시 반 = deux heures et demie (équivalent de 두 시 삼십 분)."
+    },
+    {
+      "korean": "오늘",
+      "romanization": "o neul",
+      "translation": "aujourd'hui",
+      "note": ""
+    },
+    {
+      "korean": "내일",
+      "romanization": "nae il",
+      "translation": "demain",
+      "note": ""
+    },
+    {
+      "korean": "모레",
+      "romanization": "mo re",
+      "translation": "après-demain",
+      "note": ""
+    },
+    {
+      "korean": "월요일",
+      "romanization": "wo ryo il",
+      "translation": "lundi",
+      "note": "Tous les jours de la semaine se terminent par 요일 (jour de la semaine)."
+    },
+    {
+      "korean": "화요일",
+      "romanization": "hwa yo il",
+      "translation": "mardi",
+      "note": ""
+    },
+    {
+      "korean": "수요일",
+      "romanization": "su yo il",
+      "translation": "mercredi",
+      "note": ""
+    },
+    {
+      "korean": "목요일",
+      "romanization": "mo gyo il",
+      "translation": "jeudi",
+      "note": ""
+    },
+    {
+      "korean": "금요일",
+      "romanization": "geu myo il",
+      "translation": "vendredi",
+      "note": ""
+    },
+    {
+      "korean": "토요일",
+      "romanization": "to yo il",
+      "translation": "samedi",
+      "note": ""
+    },
+    {
+      "korean": "일요일",
+      "romanization": "i ryo il",
+      "translation": "dimanche",
+      "note": ""
+    },
+    {
+      "korean": "주말",
+      "romanization": "ju mal",
+      "translation": "week-end",
+      "note": ""
+    },
+    {
+      "korean": "월",
+      "romanization": "wol",
+      "translation": "mois (compteur, pour les mois de l'année)",
+      "note": "Nombre sino-coréen + 월. Piège : 6월 = 유월 (pas 육월), 10월 = 시월 (pas 십월)."
+    },
+    {
+      "korean": "며칠이에요?",
+      "romanization": "myeo chi ri e yo",
+      "translation": "Quelle est la date ? / Quel jour du mois ?",
+      "note": ""
+    },
+    {
+      "korean": "생일",
+      "romanization": "saeng il",
+      "translation": "anniversaire",
+      "note": ""
+    },
+    {
+      "korean": "제 생일은 삼월 오일이에요",
+      "romanization": "je saeng i reun sa mwol o i ri e yo",
+      "translation": "Mon anniversaire est le 5 mars",
+      "note": "Date = mois (월) + jour (일), tous les deux en nombres sino-coréens."
+    }
+  ]
+}

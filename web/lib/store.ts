@@ -8,6 +8,7 @@ import {
   courseCompletions,
   courseEditors,
   courseFavorites,
+  courseSheets,
   courses,
   user,
   wordProgress,
@@ -73,6 +74,7 @@ export async function listCourses(viewerId?: string): Promise<CourseSummary[]> {
       invited: sql<boolean>`bool_or(${courseEditors.userId} is not null)`,
       favorite: sql<boolean>`bool_or(${courseFavorites.userId} is not null)`,
       completedAt: sql<Date | null>`max(${courseCompletions.completedAt})`,
+      hasSheet: sql<boolean>`bool_or(${courseSheets.courseId} is not null)`,
       known: sql<number>`count(distinct ${words.id}) filter (where ${wordProgress.streak} >= ${KNOWN_STREAK})::int`,
       learning: sql<number>`count(distinct ${words.id}) filter (where ${wordProgress.streak} > 0 and ${wordProgress.streak} < ${KNOWN_STREAK})::int`,
       review: sql<number>`count(distinct ${words.id}) filter (where ${wordProgress.streak} = 0)::int`,
@@ -102,6 +104,7 @@ export async function listCourses(viewerId?: string): Promise<CourseSummary[]> {
       wordProgress,
       and(eq(wordProgress.wordId, words.id), mine(wordProgress.userId))
     )
+    .leftJoin(courseSheets, eq(courseSheets.courseId, courses.id))
     .groupBy(courses.id, user.id)
     .orderBy(desc(courses.date), desc(courses.createdAt))
 
@@ -112,6 +115,7 @@ export async function listCourses(viewerId?: string): Promise<CourseSummary[]> {
       viewerId && (row.course.ownerId === viewerId || row.invited)
     ),
     favorite: Boolean(viewerId && row.favorite),
+    hasSheet: row.hasSheet,
     standing: viewerId
       ? {
           known: row.known,
@@ -136,15 +140,22 @@ export async function getCourse(id: string): Promise<Course | null> {
     .where(eq(courses.id, id))
   if (!row) return null
 
-  const rows = await db
-    .select()
-    .from(words)
-    .where(eq(words.courseId, id))
-    .orderBy(asc(words.position))
+  const [rows, [sheet]] = await Promise.all([
+    db
+      .select()
+      .from(words)
+      .where(eq(words.courseId, id))
+      .orderBy(asc(words.position)),
+    db
+      .select({ courseId: courseSheets.courseId })
+      .from(courseSheets)
+      .where(eq(courseSheets.courseId, id)),
+  ])
 
   return {
     ...toCourseShell(row.course, toAuthor(row.owner)),
     words: rows.map(toWord),
+    hasSheet: Boolean(sheet),
   }
 }
 
@@ -186,6 +197,7 @@ export async function saveCourse(
     return {
       ...toCourseShell(row, toAuthor(owner ?? null)),
       words: course.words,
+      hasSheet: false,
     }
   })
 }
@@ -219,15 +231,23 @@ export async function updateCourse(
       .for("update", { of: courses })
     if (!row) return null
 
-    const existing = await tx
-      .select()
-      .from(words)
-      .where(eq(words.courseId, id))
-      .orderBy(asc(words.position))
+    const [existing, [sheet]] = await Promise.all([
+      tx
+        .select()
+        .from(words)
+        .where(eq(words.courseId, id))
+        .orderBy(asc(words.position)),
+      tx
+        .select({ courseId: courseSheets.courseId })
+        .from(courseSheets)
+        .where(eq(courseSheets.courseId, id)),
+    ])
+    const hasSheet = Boolean(sheet)
 
     const current: Course = {
       ...toCourseShell(row.course, toAuthor(row.owner)),
       words: existing.map(toWord),
+      hasSheet,
     }
     const next = mutate(current)
 
@@ -274,8 +294,58 @@ export async function updateCourse(
     return {
       ...toCourseShell(updated, toAuthor(row.owner)),
       words: next.words,
+      hasSheet,
     }
   })
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Revision sheet — a designed PDF, generated offline and uploaded whole.     */
+/* -------------------------------------------------------------------------- */
+
+export type CourseSheet = { filename: string; data: Buffer; size: number }
+
+export async function getCourseSheet(
+  courseId: string
+): Promise<CourseSheet | null> {
+  if (!isId(courseId)) return null
+  const [row] = await db
+    .select({
+      filename: courseSheets.filename,
+      data: courseSheets.data,
+      size: courseSheets.size,
+    })
+    .from(courseSheets)
+    .where(eq(courseSheets.courseId, courseId))
+  return row ?? null
+}
+
+/** A re-upload replaces whatever sheet the lesson already had. */
+export async function saveCourseSheet(
+  courseId: string,
+  sheet: CourseSheet
+): Promise<void> {
+  await db
+    .insert(courseSheets)
+    .values({ courseId, ...sheet })
+    .onConflictDoUpdate({
+      target: courseSheets.courseId,
+      set: {
+        filename: sheet.filename,
+        data: sheet.data,
+        size: sheet.size,
+        uploadedAt: new Date(),
+      },
+    })
+}
+
+export async function deleteCourseSheet(courseId: string): Promise<boolean> {
+  if (!isId(courseId)) return false
+  const deleted = await db
+    .delete(courseSheets)
+    .where(eq(courseSheets.courseId, courseId))
+    .returning({ courseId: courseSheets.courseId })
+  return deleted.length > 0
 }
 
 /* -------------------------------------------------------------------------- */

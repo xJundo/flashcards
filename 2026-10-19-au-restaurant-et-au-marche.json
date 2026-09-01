@@ -1,0 +1,126 @@
+{
+  "title": "Au restaurant et au marché",
+  "date": "2026-10-19",
+  "words": [
+    {
+      "korean": "메뉴",
+      "romanization": "me nyu",
+      "translation": "menu",
+      "note": "Mot d'emprunt à l'anglais."
+    },
+    {
+      "korean": "주문하다",
+      "romanization": "ju mun ha da",
+      "translation": "commander",
+      "note": ""
+    },
+    {
+      "korean": "맛있어요",
+      "romanization": "ma si sseo yo",
+      "translation": "c'est bon / délicieux",
+      "note": ""
+    },
+    {
+      "korean": "맛없어요",
+      "romanization": "ma deop sseo yo",
+      "translation": "ce n'est pas bon",
+      "note": ""
+    },
+    {
+      "korean": "매워요",
+      "romanization": "mae wo yo",
+      "translation": "c'est épicé",
+      "note": "Présent poli de 맵다 (épicé, infinitif). Verbe irrégulier en ㅂ : devant une voyelle, ㅂ devient 우 → 매워요."
+    },
+    {
+      "korean": "짜요",
+      "romanization": "jja yo",
+      "translation": "c'est salé",
+      "note": "Présent poli de 짜다 (salé, infinitif)."
+    },
+    {
+      "korean": "달아요",
+      "romanization": "da ra yo",
+      "translation": "c'est sucré",
+      "note": "Présent poli de 달다 (sucré, infinitif)."
+    },
+    {
+      "korean": "아/어 주세요",
+      "romanization": "a/eo ju se yo",
+      "translation": "faites [qqch] pour moi, s'il vous plaît",
+      "note": "Radical conjugué en 아/어 + 주세요. Très utile pour toute demande polie."
+    },
+    {
+      "korean": "계산해 주세요",
+      "romanization": "gye san hae ju se yo",
+      "translation": "L'addition s'il vous plaît",
+      "note": "계산하다 (calculer/payer) + 아/어 주세요."
+    },
+    {
+      "korean": "조금 더 주세요",
+      "romanization": "jo geum deo ju se yo",
+      "translation": "Un peu plus s'il vous plaît",
+      "note": ""
+    },
+    {
+      "korean": "더",
+      "romanization": "deo",
+      "translation": "plus",
+      "note": ""
+    },
+    {
+      "korean": "이거",
+      "romanization": "i geo",
+      "translation": "ceci / ça (proche de moi)",
+      "note": ""
+    },
+    {
+      "korean": "그거",
+      "romanization": "geu geo",
+      "translation": "ça (proche de l'interlocuteur, ou dont on vient de parler)",
+      "note": ""
+    },
+    {
+      "korean": "저거",
+      "romanization": "jeo geo",
+      "translation": "cela, là-bas (loin de nous deux)",
+      "note": ""
+    },
+    {
+      "korean": "포장해 주세요",
+      "romanization": "po jang hae ju se yo",
+      "translation": "Emballez pour emporter s'il vous plaît",
+      "note": ""
+    },
+    {
+      "korean": "물",
+      "romanization": "mul",
+      "translation": "eau",
+      "note": ""
+    },
+    {
+      "korean": "밥",
+      "romanization": "bap",
+      "translation": "riz / repas",
+      "note": "밥 먹었어요? (Tu as mangé ?) est une salutation courante entre proches."
+    },
+    {
+      "korean": "시장",
+      "romanization": "si jang",
+      "translation": "marché",
+      "note": ""
+    },
+    {
+      "korean": "마트",
+      "romanization": "ma teu",
+      "translation": "supermarché",
+      "note": "Mot d'emprunt à l'anglais (mart)."
+    },
+    {
+      "korean": "이거 주세요",
+      "romanization": "i geo ju se yo",
+      "translation": "Je voudrais ça / donnez-moi ça",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,312 @@
+{
+  "id": "7a251314-faf0-4bb4-b4c7-26cf6b047f33",
+  "title": "Particules",
+  "date": "2026-08-01",
+  "createdAt": "2026-08-01T22:20:48.671Z",
+  "updatedAt": "2026-08-03T12:58:31.820Z",
+  "owner": {
+    "id": "dvsuvfmiJXPWhkmYVlcHfmCMSoVRErSz",
+    "name": "Gianni"
+  },
+  "words": [
+    {
+      "id": "d0331c45-fda2-42cd-b975-6ca544b54bda",
+      "korean": "사과",
+      "romanization": "sa gwa",
+      "translation": "pomme"
+    },
+    {
+      "id": "47e35eb0-5411-46da-98ea-1358e5aa31a7",
+      "korean": "바나나",
+      "romanization": "ba na na",
+      "translation": "banane"
+    },
+    {
+      "id": "c67f14cb-d3df-47f9-b6d4-1f517c8970bd",
+      "korean": "딸기",
+      "romanization": "ttal gi",
+      "translation": "fraise",
+      "note": "Attention au son de la consonne double ㄸ (tt)."
+    },
+    {
+      "id": "f814a792-a937-46c5-8b9e-040555b8179a",
+      "korean": "좋아해요",
+      "romanization": "jo a hae yo",
+      "translation": "J'aime / J'apprécie",
+      "note": "S'associe généralement avec la particule d'objet direct 를/을 (reul/eul)."
+    },
+    {
+      "id": "7e2bef0e-825b-4a8c-aa04-c0941b21f11c",
+      "korean": "미안해요",
+      "romanization": "mi an hae yo",
+      "translation": "Désolé(e)",
+      "note": "Forme polie courante (style -요)."
+    },
+    {
+      "id": "5f6f0195-e216-4899-ab1f-e2a369186e31",
+      "korean": "어디예요?",
+      "romanization": "eo di ye yo",
+      "translation": "Où est-ce ?",
+      "note": "Pour poser une question en coréen, la structure reste identique à une phrase affirmative, seule l'intonation est montante à la fin."
+    },
+    {
+      "id": "cf715f6c-b773-4cea-946e-d04aa7a782dc",
+      "korean": "사과 예요",
+      "romanization": "sa gwa ye yo",
+      "translation": "C'est une pomme",
+      "note": "Le verbe être au style poli utilise 예요 (ye-yo) lorsque le nom précédent se termine par une voyelle."
+    },
+    {
+      "id": "42e36a6a-536c-48a5-b4c2-36699dfc1453",
+      "korean": "바나나 예요",
+      "romanization": "ba na na ye yo",
+      "translation": "C'est une banane",
+      "note": "Utilisation de 예요 (ye-yo) car 바나나 se termine par une voyelle (아)."
+    },
+    {
+      "id": "2ba69a94-e587-471d-91a2-705c3f977214",
+      "korean": "딸기 예요",
+      "romanization": "ttal gi ye yo",
+      "translation": "C'est une fraise",
+      "note": "Utilisation de 예요 (ye-yo) car 딸기 se termine par une voyelle (이)."
+    },
+    {
+      "id": "d24c0e8c-bee6-4aac-a7e6-2a5bfcf271aa",
+      "korean": "사과 좋아해요",
+      "romanization": "sa gwa jo a hae yo",
+      "translation": "J'aime les pommes",
+      "note": "En coréen parlé, les particules d'objet (COD) sont fréquemment omises dans les phrases simples."
+    },
+    {
+      "id": "2a5f3fa1-03f3-46b1-a928-98c50f16744b",
+      "korean": "세요",
+      "romanization": "seyo",
+      "translation": "Formule d'honneur / politesse",
+      "note": "Niveau de politesse honorifique supérieur au simple 요 (yo), utilisé pour exprimer le respect envers l'interlocuteur."
+    },
+    {
+      "id": "111c4655-f6e5-4548-81d0-6847fc8f79d5",
+      "korean": "스위스",
+      "romanization": "sewi seu",
+      "translation": "Suisse",
+      "note": "Pour exprimer la nationalité, on associe directement le nom du pays au mot 사람 (sa ram) : 스위스 사람 = Suisse (personne)."
+    },
+    {
+      "id": "d75136e0-ad2b-4819-9ec0-684fdd6e39c7",
+      "korean": "이탈리아",
+      "romanization": "i tal li a",
+      "translation": "Italie",
+      "note": "Pour exprimer la nationalité : 이탈리아 사람 = Italien(ne)."
+    },
+    {
+      "id": "4d0a21a3-aebe-463a-99dc-ad8145f10a1c",
+      "korean": "나",
+      "romanization": "na",
+      "translation": "je / moi",
+      "note": "Pronom informel (반말 / banmal), à utiliser uniquement avec des amis proches ou des personnes plus jeunes."
+    },
+    {
+      "id": "f88d5753-b867-44b5-93f6-d1e07ae86fe9",
+      "korean": "저",
+      "romanization": "jeo",
+      "translation": "je / moi",
+      "note": "Pronom d'humilité/politesse (존댓말 / jondaetmal). Le 저 se prononce avec un son proche de 'Tch' ou 'Dj', et non 'Sho'."
+    },
+    {
+      "id": "b8c9cd78-a7ca-4032-b65f-6d59186a275f",
+      "korean": "은 / 는",
+      "romanization": "eun / neun",
+      "translation": "Particule de sujet / thème",
+      "note": "Règle d'accord : on utilise 는 (neun) après une voyelle, et 은 (eun) après une consonne."
+    },
+    {
+      "id": "1014435b-1c7e-4368-9fe8-bb0a88158d6e",
+      "korean": "저는",
+      "romanization": "jeo neun",
+      "translation": "je / moi (quant à moi)",
+      "note": "Combinaison du pronom poli 저 et de la particule de thème 는 (car 저 finit par une voyelle). Se prononce [Tchoneun]."
+    },
+    {
+      "id": "b268f399-b577-4fdc-9278-05a5aab0dafc",
+      "korean": "사람",
+      "romanization": "sa ram",
+      "translation": "personne / les gens",
+      "note": "Règle de nationalité : [Nom du Pays] + 사람 = personne de ce pays (ex: 프랑스 사람 = Français)."
+    },
+    {
+      "id": "f5312c6d-65c8-44f7-9361-d96ac003923c",
+      "korean": "학생",
+      "romanization": "hak saeng",
+      "translation": "étudiant(e)",
+      "note": "Se termine par une consonne (발음 / batchim), donc suivi de 이에요 (i-e-yo) pour dire 'être étudiant' (학생이에요)."
+    },
+    {
+      "id": "781bf2b2-1f2e-49de-abcb-03681242653c",
+      "korean": "비디오 게임",
+      "romanization": "bi di o ge im",
+      "translation": "jeux vidéo",
+      "note": "Mot d'emprunt à l'anglais (video game)."
+    },
+    {
+      "id": "dd9c83dc-4459-41ce-9ac0-95c61b6f7a09",
+      "korean": "친구야",
+      "romanization": "chin gu ya",
+      "translation": "C'est un ami ! / Hé ami !",
+      "note": "Style très informel/amical. Le 야 (ya) sert de terminaison informelle après voyelle ou d'interpellation."
+    },
+    {
+      "id": "8da1a0db-eae4-4f09-93ca-68161997fbe9",
+      "korean": "있어요",
+      "romanization": "is seo yo",
+      "translation": "avoir / il y a / exister",
+      "note": "Utilisé pour exprimer la possession ou la présence d'un objet/personne."
+    },
+    {
+      "id": "2454c7f3-b94c-4aec-8e67-aa4a0a5dc187",
+      "korean": "없어요",
+      "romanization": "eobs eo yo",
+      "translation": "ne pas avoir / il n'y a pas",
+      "note": "Règle importante de négation : pour exprimer l'absence ou la non-possession, on n'ajoute PAS le préfixe de négation classique 안 (an). Il faut utiliser le verbe antonyme spécifique 없어요 (eobs-eo-yo)."
+    },
+    {
+      "id": "41c8768d-7586-4027-8e9a-ee74a1d8536c",
+      "korean": "커튼",
+      "romanization": "keo teun",
+      "translation": "rideaux",
+      "note": "Mot d'emprunt à l'anglais (curtain)."
+    },
+    {
+      "id": "b8611e59-482f-4c78-8885-2657b8c7c3ca",
+      "korean": "돈",
+      "romanization": "don",
+      "translation": "argent",
+      "note": "Attention aux nuances de contexte et de prononciation proche qui peuvent parfois évoquer l'âge selon le registre."
+    },
+    {
+      "id": "6626d5ad-30d5-48b6-b835-5446fc60622f",
+      "korean": "해요",
+      "romanization": "hae yo",
+      "translation": "faire",
+      "note": "Forme conjuguée au présent poli du verbe 하다 (ha-da). S'associe à de nombreux noms pour former des verbes d'action. Note : On ne place jamais le mot 'mot' devant les verbes."
+    },
+    {
+      "id": "eeab2888-93a1-4b75-bd5a-16244c8e2f41",
+      "korean": "공부해요",
+      "romanization": "gong bu hae yo",
+      "translation": "j'étudie",
+      "note": "Construction verbale : 공부 (les études) + 해요 (faire) = faire des études."
+    },
+    {
+      "id": "86c67747-17ff-42c9-9d53-72090626be2f",
+      "korean": "저는 엔지니어 공부해요",
+      "romanization": "jeo neun en ji ni eo gong bu hae yo",
+      "translation": "j'étudie pour être ingénieur",
+      "note": "Structure de phrase complète : Sujet (저는) + Domaine/Objectif (엔지니어) + Verbe d'action (공부해요)."
+    },
+    {
+      "id": "dacbb8eb-3ba5-4e5f-959d-f08f2d091f3a",
+      "korean": "요리",
+      "romanization": "yo ri",
+      "translation": "la cuisine / plat",
+      "note": "Désigne le nom commun 'la cuisine' au sens général."
+    },
+    {
+      "id": "1346ff95-c7b8-4de9-9325-dde910f06bf2",
+      "korean": "요리해요",
+      "romanization": "yo ri hae yo",
+      "translation": "je fais la cuisine / je cuisined",
+      "note": "Verbe d'action formé en associant le nom 요리 (cuisine) et le verbe 해요 (faire)."
+    },
+    {
+      "id": "adf026dc-dc73-47c7-9ae6-9e5384228567",
+      "korean": "사랑해요",
+      "romanization": "sa rang hae yo",
+      "translation": "aimer / je t'aime",
+      "note": "Formé de 사랑 (amour) + 해요 (faire). Reservé aux sentiments d'amour forts et profonds (différent de 좋아해요 qui exprime plutôt le fait d'apprécier)."
+    },
+    {
+      "id": "a6869345-a848-4d4e-a84b-a8cfda964ac1",
+      "korean": "자",
+      "romanization": "ja",
+      "translation": "Suffixe 'faisons [action]' / 'ensemble'",
+      "note": "Règle de proposition amicale (style informel / banmal) : s'attache directement au radical d'un verbe pour inviter à faire une action ensemble (ex: 가다 -> 가자 = allons-y)."
+    },
+    {
+      "id": "61b158ed-17f9-4d19-a650-a45ab3161975",
+      "korean": "수영해요",
+      "romanization": "su yeong hae yo",
+      "translation": "je fais de la natation / je nage",
+      "note": "Formé de 수영 (natation) + 해요 (faire)."
+    },
+    {
+      "id": "2f63d9e1-a040-44e7-9bb1-90f8b9c1c628",
+      "korean": "등산해요",
+      "romanization": "deung san hae yo",
+      "translation": "je fais de l'escalade / de la randonnée",
+      "note": "Formé de 등산 (randonnée en montagne) + 해요 (faire)."
+    },
+    {
+      "id": "af258050-c3cc-42ac-bf14-21d47e74c2ff",
+      "korean": "스포츠해요",
+      "romanization": "se u po cheu hae yo",
+      "translation": "je fais du sport",
+      "note": "Formé du nom d'emprunt 스포츠 (sport) + 해요 (faire)."
+    },
+    {
+      "id": "86785437-ae08-46ce-9832-35109f26c177",
+      "korean": "너는",
+      "romanization": "neo neun",
+      "translation": "toi (quant à toi)",
+      "note": "Pronom informel 너 (tu/toi) + particule de thème 는. À réserver exclusivement au cercle amical très proche."
+    },
+    {
+      "id": "ace6792a-9b3d-409c-a57f-6f99d50d0f72",
+      "korean": "엄마는",
+      "romanization": "eom ma neun",
+      "translation": "maman (quant à maman)",
+      "note": "Nom 엄마 (maman) + particule de thème 는 (car terminaison par la voyelle 아)."
+    },
+    {
+      "id": "5b3c41be-6f18-4111-9317-7e916e1d523e",
+      "korean": "아빠는",
+      "romanization": "a ppa neun",
+      "translation": "papa (quant à papa)",
+      "note": "Nom 아빠 (papa) + particule de thème 는 (car terminaison par la voyelle 아)."
+    },
+    {
+      "id": "2a415027-47bc-4b76-a981-02b81c017ceb",
+      "korean": "를 / 을",
+      "romanization": "reul / eul",
+      "translation": "Particule d'objet direct (COD)",
+      "note": "Règle d'accord COD : on utilise 를 (reul) si le mot précédent finit par une voyelle, et 을 (eul) si le mot précédent finit par une consonne."
+    },
+    {
+      "id": "b6f676e2-1571-47c8-84ff-c0a71e821396",
+      "korean": "들",
+      "romanization": "",
+      "translation": "Marqueur du pluriel",
+      "note": "S'attache à la fin d'un nom pour désigner la pluralité (ex: 사람 = une personne -> 사람들 = les gens/personnes). Souvent omis en coréen si le contexte est évident."
+    },
+    {
+      "id": "158c0d57-656c-433e-8c07-a83476d0d300",
+      "korean": "저는 지아니예요",
+      "romanization": "jeo neun ji a ni ye yo",
+      "translation": "Je suis Gianni",
+      "note": "Utilise le pronom poli 저는 (je), le nom transcrit en coréen (지아니) et la terminaison 예요 (i.e. 'être' poli) car le nom se termine par une voyelle."
+    },
+    {
+      "id": "24dc54e1-df04-4556-85fa-9e91e1eee1a9",
+      "korean": "저는 프랑스사람 이에요",
+      "romanization": "jeo neun peu rang seu sa ram i e yo",
+      "translation": "Je suis français(e)",
+      "note": "Nom du pays (프랑스) + 사람 (personne)[cite: 1] + 이에요 (être). On utilise 이에요 car 사람 se termine par la consonne ㅁ (batchim)."
+    },
+    {
+      "id": "be1aa50e-4dfd-4619-b825-8cb4e40bd129",
+      "korean": "저는 여자 친구 있어요",
+      "romanization": "jeo neun yeo ja chin gu is seo yo",
+      "translation": "J'ai une petite amie",
+      "note": "여자 (femme) + 친구 (ami) = petite amie[cite: 1]. L'image indique aussi 남자 (homme) pour petit ami (남자 친구). Suivi de 있어요 (avoir)"
+    }
+  ]
+}

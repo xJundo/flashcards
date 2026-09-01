@@ -1,0 +1,120 @@
+{
+  "title": "Particules de lieu avancées et verbes de déplacement",
+  "date": "2026-10-01",
+  "words": [
+    {
+      "korean": "에서",
+      "romanization": "e seo",
+      "translation": "à / dans (lieu où se déroule une action)",
+      "note": "Différent de 에 : 에서 marque le lieu d'une ACTION, 에 marque une destination ou position statique (일이 없다/있다, aller vers)."
+    },
+    {
+      "korean": "집에서 공부해요",
+      "romanization": "ji be seo gong bu hae yo",
+      "translation": "J'étudie à la maison",
+      "note": "에서 car 공부하다 (étudier) est une action qui se déroule dans ce lieu."
+    },
+    {
+      "korean": "집에 가요",
+      "romanization": "ji be ga yo",
+      "translation": "Je vais à la maison",
+      "note": "에 car 가다 exprime une destination, pas une action qui se déroule sur place."
+    },
+    {
+      "korean": "로 / 으로",
+      "romanization": "ro / eu ro",
+      "translation": "vers / par (direction, moyen)",
+      "note": "로 après voyelle ou 받침 ㄹ, 으로 après consonne."
+    },
+    {
+      "korean": "왼쪽으로 가세요",
+      "romanization": "oen jjo geu ro ga se yo",
+      "translation": "Allez à gauche",
+      "note": "쪽 finit par une consonne → 으로."
+    },
+    {
+      "korean": "오른쪽",
+      "romanization": "o reun jjok",
+      "translation": "droite",
+      "note": ""
+    },
+    {
+      "korean": "왼쪽",
+      "romanization": "oen jjok",
+      "translation": "gauche",
+      "note": ""
+    },
+    {
+      "korean": "똑바로",
+      "romanization": "ttok ba ro",
+      "translation": "tout droit",
+      "note": ""
+    },
+    {
+      "korean": "지하철",
+      "romanization": "ji ha cheol",
+      "translation": "métro",
+      "note": ""
+    },
+    {
+      "korean": "버스",
+      "romanization": "beo seu",
+      "translation": "bus",
+      "note": ""
+    },
+    {
+      "korean": "택시",
+      "romanization": "taek si",
+      "translation": "taxi",
+      "note": ""
+    },
+    {
+      "korean": "타다",
+      "romanization": "ta da",
+      "translation": "monter dans / prendre (un véhicule)",
+      "note": ""
+    },
+    {
+      "korean": "지하철로 가요",
+      "romanization": "ji ha cheol lo ga yo",
+      "translation": "J'y vais en métro",
+      "note": "로/으로 pour exprimer le moyen de transport."
+    },
+    {
+      "korean": "내리다",
+      "romanization": "nae ri da",
+      "translation": "descendre (d'un véhicule)",
+      "note": ""
+    },
+    {
+      "korean": "걸어서",
+      "romanization": "geo reo seo",
+      "translation": "à pied",
+      "note": "Forme figée à connaître telle quelle (dérivée de 걷다 + 아서, vu plus en détail dans une leçon future)."
+    },
+    {
+      "korean": "여기",
+      "romanization": "yeo gi",
+      "translation": "ici",
+      "note": "Même logique que 이거/그거/저거 : 여기 = proche de moi."
+    },
+    {
+      "korean": "거기",
+      "romanization": "geo gi",
+      "translation": "là (proche de toi / dont on parle)",
+      "note": "거기 = proche de l'interlocuteur, ou lieu déjà mentionné dans la conversation."
+    },
+    {
+      "korean": "저기",
+      "romanization": "jeo gi",
+      "translation": "là-bas (loin de nous deux)",
+      "note": "저기 = visible mais éloigné des deux interlocuteurs."
+    },
+    {
+      "korean": "여기가 어디예요?",
+      "romanization": "yeo gi ga eo di ye yo",
+      "translation": "Où sommes-nous ici ? / C'est quel endroit ici ?",
+      "note": ""
+    }
+  ]
+}

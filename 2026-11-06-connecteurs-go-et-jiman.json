@@ -1,0 +1,102 @@
+{
+  "title": "Connecteurs simples : -고 et -지만",
+  "date": "2026-11-06",
+  "words": [
+    {
+      "korean": "고",
+      "romanization": "go",
+      "translation": "et (relie deux actions/états)",
+      "note": "S'attache directement au radical, aucun changement selon la voyelle."
+    },
+    {
+      "korean": "저는 학생이고 언니는 선생님이에요",
+      "romanization": "jeo neun hak ssaeng i go eon ni neun seon saeng ni mi e yo",
+      "translation": "Je suis étudiant(e) et ma grande sœur est professeure",
+      "note": ""
+    },
+    {
+      "korean": "언니",
+      "romanization": "eon ni",
+      "translation": "grande sœur (dit par une femme)",
+      "note": "Piège classique : le mot change selon le genre de la personne qui PARLE, pas selon celui de la sœur/du frère."
+    },
+    {
+      "korean": "오빠",
+      "romanization": "o ppa",
+      "translation": "grand frère (dit par une femme)",
+      "note": ""
+    },
+    {
+      "korean": "누나",
+      "romanization": "nu na",
+      "translation": "grande sœur (dit par un homme)",
+      "note": ""
+    },
+    {
+      "korean": "형",
+      "romanization": "hyeong",
+      "translation": "grand frère (dit par un homme)",
+      "note": ""
+    },
+    {
+      "korean": "선생님",
+      "romanization": "seon saeng nim",
+      "translation": "professeur",
+      "note": ""
+    },
+    {
+      "korean": "아침을 먹고 학교에 가요",
+      "romanization": "a chi meul meok go hak kkyo e ga yo",
+      "translation": "Je mange le petit-déjeuner puis je vais à l'école",
+      "note": "고 = simple succession d'actions, sans lien logique de cause."
+    },
+    {
+      "korean": "학교",
+      "romanization": "hak kkyo",
+      "translation": "école",
+      "note": ""
+    },
+    {
+      "korean": "지만",
+      "romanization": "ji man",
+      "translation": "mais",
+      "note": "S'attache directement au radical (forme dictionnaire sans 다) + 지만, quel que soit le niveau de politesse."
+    },
+    {
+      "korean": "맵지만 맛있어요",
+      "romanization": "maep jji man ma si sseo yo",
+      "translation": "C'est épicé mais c'est bon",
+      "note": "맵 + 지만 : pas de changement irrégulier ici car 지만 commence par une consonne."
+    },
+    {
+      "korean": "사다",
+      "romanization": "sa da",
+      "translation": "acheter",
+      "note": ""
+    },
+    {
+      "korean": "비싸지만 사고 싶어요",
+      "romanization": "bi ssa ji man sa go si peo yo",
+      "translation": "C'est cher mais je veux l'acheter",
+      "note": ""
+    },
+    {
+      "korean": "어려워요",
+      "romanization": "eo ryeo wo yo",
+      "translation": "c'est difficile",
+      "note": "Présent poli de 어렵다 (difficile, infinitif). Irrégulier en ㅂ."
+    },
+    {
+      "korean": "쉬워요",
+      "romanization": "swi wo yo",
+      "translation": "c'est facile",
+      "note": "Présent poli de 쉽다 (facile, infinitif). Irrégulier en ㅂ."
+    },
+    {
+      "korean": "한국어는 어렵지만 재미있어요",
+      "romanization": "han gu geo neun eo ryeop jji man jae mi i sseo yo",
+      "translation": "Le coréen est difficile mais intéressant",
+      "note": "어렵 + 지만 : pas d'irrégularité déclenchée (지만 commence par une consonne)."
+    }
+  ]
+}

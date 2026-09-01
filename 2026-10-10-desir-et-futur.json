@@ -1,0 +1,96 @@
+{
+  "title": "Désir et futur : -고 싶어요 et -(으)ㄹ 거예요",
+  "date": "2026-10-10",
+  "words": [
+    {
+      "korean": "고 싶어요",
+      "romanization": "go si peo yo",
+      "translation": "avoir envie de / vouloir",
+      "note": "Radical du verbe + 고 싶어요, sans changement selon la voyelle."
+    },
+    {
+      "korean": "한국에 가고 싶어요",
+      "romanization": "han gu ge ga go si peo yo",
+      "translation": "Je veux aller en Corée",
+      "note": ""
+    },
+    {
+      "korean": "김치를 먹고 싶어요",
+      "romanization": "gim chi reul meok go si peo yo",
+      "translation": "Je veux manger du kimchi",
+      "note": ""
+    },
+    {
+      "korean": "(으)ㄹ 거예요",
+      "romanization": "(eu)l geo ye yo",
+      "translation": "terminaison du futur / de l'intention",
+      "note": "Radical en voyelle ou 받침 ㄹ → ㄹ 거예요. Radical en consonne → 을 거예요."
+    },
+    {
+      "korean": "내일 갈 거예요",
+      "romanization": "nae il gal geo ye yo",
+      "translation": "J'irai demain / je vais aller demain",
+      "note": "가 (voyelle) + ㄹ 거예요 = 갈 거예요."
+    },
+    {
+      "korean": "저녁을 먹을 거예요",
+      "romanization": "jeo nyeo geul meo geul geo ye yo",
+      "translation": "Je vais manger le dîner",
+      "note": "먹 (consonne) + 을 거예요."
+    },
+    {
+      "korean": "아침",
+      "romanization": "a chim",
+      "translation": "matin / petit-déjeuner",
+      "note": ""
+    },
+    {
+      "korean": "점심",
+      "romanization": "jeom sim",
+      "translation": "midi / déjeuner",
+      "note": ""
+    },
+    {
+      "korean": "저녁",
+      "romanization": "jeo nyeok",
+      "translation": "soir / dîner",
+      "note": ""
+    },
+    {
+      "korean": "오늘 저녁에 뭐 할 거예요?",
+      "romanization": "o neul jeo nyeo ge mwo hal geo ye yo",
+      "translation": "Que vas-tu faire ce soir ?",
+      "note": "하 (voyelle ㅏ) + ㄹ 거예요 = 할 거예요."
+    },
+    {
+      "korean": "나중에",
+      "romanization": "na jung e",
+      "translation": "plus tard",
+      "note": ""
+    },
+    {
+      "korean": "전화하다",
+      "romanization": "jeon hwa ha da",
+      "translation": "téléphoner",
+      "note": ""
+    },
+    {
+      "korean": "나중에 전화할 거예요",
+      "romanization": "na jung e jeon hwa hal geo ye yo",
+      "translation": "Je t'appellerai plus tard",
+      "note": ""
+    },
+    {
+      "korean": "뭐 먹고 싶어요?",
+      "romanization": "mwo meok go si peo yo",
+      "translation": "Qu'est-ce que tu veux manger ?",
+      "note": ""
+    },
+    {
+      "korean": "김치",
+      "romanization": "gim chi",
+      "translation": "kimchi",
+      "note": ""
+    }
+  ]
+}

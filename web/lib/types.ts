@@ -22,6 +22,8 @@ export type Course = {
   /** `null` once the author deletes their account: readable, but frozen. */
   owner: Author | null
   words: Word[]
+  /** Whether a revision sheet (PDF) has been uploaded for this lesson. */
+  hasSheet: boolean
 }
 
 export type CourseSummary = Omit<Course, "words"> & {

@@ -5,3 +5,8 @@ services:
   web:
     ports:
       - "${PORT:-3000}:3000"
+  db:
+    # Published so `npm run dev` (outside Docker, for hot reload) can reach
+    # Postgres too — matches the port `web/.env.example` already documents.
+    ports:
+      - "5433:5432"

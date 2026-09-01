@@ -1,0 +1,120 @@
+{
+  "title": "Le passé : -았/었어요",
+  "date": "2026-09-04",
+  "words": [
+    {
+      "korean": "았어요 / 었어요",
+      "romanization": "at sseo yo / eot sseo yo",
+      "translation": "terminaison du passé",
+      "note": "Même règle d'harmonie que pour 아요/어요 : radical en ㅏ/ㅗ → 았어요, sinon → 었어요. 하다 → 했어요."
+    },
+    {
+      "korean": "했어요",
+      "romanization": "hae sseo yo",
+      "translation": "j'ai fait (passé de 하다)",
+      "note": ""
+    },
+    {
+      "korean": "갔어요",
+      "romanization": "ga sseo yo",
+      "translation": "je suis allé(e) (passé de 가다)",
+      "note": "가+았어요 se contracte en 갔어요."
+    },
+    {
+      "korean": "왔어요",
+      "romanization": "wa sseo yo",
+      "translation": "je suis venu(e) (passé de 오다)",
+      "note": "오+았어요 = 왔어요."
+    },
+    {
+      "korean": "먹었어요",
+      "romanization": "meo geo sseo yo",
+      "translation": "j'ai mangé",
+      "note": ""
+    },
+    {
+      "korean": "봤어요",
+      "romanization": "bwa sseo yo",
+      "translation": "j'ai vu / j'ai regardé",
+      "note": "보+았어요 = 봤어요."
+    },
+    {
+      "korean": "마셨어요",
+      "romanization": "ma syeo sseo yo",
+      "translation": "j'ai bu",
+      "note": ""
+    },
+    {
+      "korean": "배웠어요",
+      "romanization": "bae wo sseo yo",
+      "translation": "j'ai appris",
+      "note": ""
+    },
+    {
+      "korean": "만났어요",
+      "romanization": "man na sseo yo",
+      "translation": "j'ai rencontré",
+      "note": ""
+    },
+    {
+      "korean": "있었어요",
+      "romanization": "i sseo sseo yo",
+      "translation": "il y avait / j'avais",
+      "note": "Passé de 있어요."
+    },
+    {
+      "korean": "없었어요",
+      "romanization": "eop sseo sseo yo",
+      "translation": "il n'y avait pas / je n'avais pas",
+      "note": "Passé de 없어요."
+    },
+    {
+      "korean": "이었어요 / 였어요",
+      "romanization": "i eo sseo yo / yeo sseo yo",
+      "translation": "j'étais / tu étais / c'était (passé de 이에요/예요, la traduction dépend du sujet de la phrase)",
+      "note": "Les deux formes veulent dire exactement la même chose : ce n'est pas deux sens différents, juste deux prononciations de la même terminaison. On choisit selon le son qui précède : 이었어요 après une consonne, 였어요 après une voyelle."
+    },
+    {
+      "korean": "저는 학생이었어요",
+      "romanization": "jeo neun hak ssaeng i eo sseo yo",
+      "translation": "J'étais étudiant(e)",
+      "note": "학생 finit par une consonne (ㅇ) → 이었어요."
+    },
+    {
+      "korean": "친구였어요",
+      "romanization": "chin gu yeo sseo yo",
+      "translation": "C'était un ami / j'étais son ami",
+      "note": "친구 finit par une voyelle → 였어요."
+    },
+    {
+      "korean": "어제",
+      "romanization": "eo je",
+      "translation": "hier",
+      "note": ""
+    },
+    {
+      "korean": "지난주",
+      "romanization": "ji nan ju",
+      "translation": "la semaine dernière",
+      "note": ""
+    },
+    {
+      "korean": "한국",
+      "romanization": "han guk",
+      "translation": "Corée",
+      "note": "한국 사람 = coréen(ne), 한국어 = la langue coréenne."
+    },
+    {
+      "korean": "어제 친구를 만났어요",
+      "romanization": "eo je chin gu reul man na sseo yo",
+      "translation": "Hier j'ai rencontré un ami",
+      "note": ""
+    },
+    {
+      "korean": "지난주에 한국에 갔어요",
+      "romanization": "ji nan ju e han gu ge ga sseo yo",
+      "translation": "La semaine dernière je suis allé en Corée",
+      "note": "지난주 + 에 : les expressions de temps précises prennent aussi la particule 에."
+    }
+  ]
+}

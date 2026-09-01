@@ -1,0 +1,114 @@
+{
+  "title": "Conjugaison : harmonie vocalique et présent poli",
+  "date": "2026-08-26",
+  "words": [
+    {
+      "korean": "다",
+      "romanization": "da",
+      "translation": "terminaison de l'infinitif (tous les verbes/adjectifs)",
+      "note": "Règle d'or : on enlève 다 pour trouver le radical, puis on ajoute 아요 si la dernière voyelle du radical est ㅏ ou ㅗ, sinon 어요. 하다 devient toujours 해요."
+    },
+    {
+      "korean": "와요",
+      "romanization": "wa yo",
+      "translation": "je viens / il ou elle vient",
+      "note": "Présent poli de 오다 (venir, infinitif). Radical 오 (voyelle ㅗ) + 아요 : ㅗ+아 se contracte en 와, d'où 와요."
+    },
+    {
+      "korean": "봐요",
+      "romanization": "bwa yo",
+      "translation": "je regarde / il ou elle regarde",
+      "note": "Présent poli de 보다 (voir/regarder, infinitif). Même contraction que 오다 : ㅗ+아요 = 봐요."
+    },
+    {
+      "korean": "배워요",
+      "romanization": "bae wo yo",
+      "translation": "j'apprends / il ou elle apprend",
+      "note": "Présent poli de 배우다 (apprendre, infinitif). Radical se termine par ㅜ (pas ㅏ/ㅗ) → 어요, qui se contracte en 워 (우+어=워)."
+    },
+    {
+      "korean": "마셔요",
+      "romanization": "ma syeo yo",
+      "translation": "je bois / il ou elle boit",
+      "note": "Présent poli de 마시다 (boire, infinitif). Radical en 이 + 어요, contracté en 여 (이+어=여) → 마셔요."
+    },
+    {
+      "korean": "써요",
+      "romanization": "sseo yo",
+      "translation": "j'écris / j'utilise (il ou elle écrit, utilise)",
+      "note": "Présent poli de 쓰다 (écrire/utiliser, infinitif). Verbe irrégulier en 으 : le ㅡ disparaît devant une voyelle → 써요."
+    },
+    {
+      "korean": "줘요",
+      "romanization": "jwo yo",
+      "translation": "je donne / il ou elle donne",
+      "note": "Présent poli de 주다 (donner, infinitif). ㅜ+어요 se contracte en 줘요."
+    },
+    {
+      "korean": "만나요",
+      "romanization": "man na yo",
+      "translation": "je rencontre / il ou elle rencontre",
+      "note": "Présent poli de 만나다 (rencontrer, infinitif). Radical déjà terminé par 아 : 아+아요 fusionnent, pas de doublon (만나아요 n'existe pas)."
+    },
+    {
+      "korean": "자요",
+      "romanization": "ja yo",
+      "translation": "je dors / il ou elle dort",
+      "note": "Présent poli de 자다 (dormir, infinitif). Même logique que 만나다 : la voyelle ne se répète pas."
+    },
+    {
+      "korean": "읽어요",
+      "romanization": "il geo yo",
+      "translation": "je lis / il ou elle lit",
+      "note": "Présent poli de 읽다 (lire, infinitif). Radical à consonne finale (받침) : pas de contraction, on ajoute juste 어요 tel quel."
+    },
+    {
+      "korean": "만들어요",
+      "romanization": "man deu reo yo",
+      "translation": "je fais / je fabrique (il ou elle fait, fabrique)",
+      "note": "Présent poli de 만들다 (faire/fabriquer, infinitif). Régulier malgré le 받침 ㄹ : 들+어요 = 들어요."
+    },
+    {
+      "korean": "들어요",
+      "romanization": "deu reo yo",
+      "translation": "j'écoute / j'entends (il ou elle écoute, entend)",
+      "note": "Présent poli de 듣다 (écouter/entendre, infinitif). Verbe irrégulier en ㄷ : devant une voyelle, ㄷ se change en ㄹ. Piège classique."
+    },
+    {
+      "korean": "받아요",
+      "romanization": "ba da yo",
+      "translation": "je reçois / il ou elle reçoit",
+      "note": "Présent poli de 받다 (recevoir, infinitif). Attention : N'EST PAS irrégulier (contrairement à 듣다), le ㄷ ne bouge pas — les verbes en ㄷ irréguliers s'apprennent un par un."
+    },
+    {
+      "korean": "책",
+      "romanization": "chaek",
+      "translation": "livre",
+      "note": ""
+    },
+    {
+      "korean": "매일",
+      "romanization": "mae il",
+      "translation": "chaque jour / tous les jours",
+      "note": "Se place en début de phrase ou juste avant le verbe."
+    },
+    {
+      "korean": "친구",
+      "romanization": "chin gu",
+      "translation": "ami(e)",
+      "note": ""
+    },
+    {
+      "korean": "저는 매일 한국어 책을 읽어요",
+      "romanization": "jeo neun mae il han gu geo chae geul il geo yo",
+      "translation": "Je lis un livre de coréen tous les jours",
+      "note": "Structure complète : Sujet + 매일 + COD (책을) + verbe conjugué (읽어요)."
+    },
+    {
+      "korean": "친구를 만나요",
+      "romanization": "chin gu reul man na yo",
+      "translation": "Je rencontre un ami / je vois un ami",
+      "note": "만나다 se construit toujours avec 를/을, jamais avec 이랑 seul."
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "id": "6c86a91c-676a-414d-927c-3dda5067a4db",
+  "title": "Conjugaison, négation, questions et particules de lieu",
+  "date": "2026-08-04",
+  "createdAt": "2026-08-04T20:31:43.840Z",
+  "updatedAt": "2026-08-04T20:31:43.840Z",
+  "owner": {
+    "id": "dvsuvfmiJXPWhkmYVlcHfmCMSoVRErSz",
+    "name": "Gianni"
+  },
+  "words": [
+    {
+      "id": "86a5398a-d0b7-4671-9d54-07602d4845e0",
+      "korean": "콜라 먹어",
+      "romanization": "kol la meog eo",
+      "translation": "boire/manger du coca",
+      "note": "Expression très courante à l'oral (informel)."
+    },
+    {
+      "id": "973ffb75-9e97-4187-b321-3eeec840d299",
+      "korean": "맞아요",
+      "romanization": "ma ja yo",
+      "translation": "Tu as raison / C'est exact",
+      "note": "Expression très utilisée pour acquiescer en situation polie."
+    },
+    {
+      "id": "f58c59aa-d5f8-4bd6-9e1a-84d99c3382e6",
+      "korean": "차",
+      "romanization": "cha",
+      "translation": "voiture",
+      "note": "Peut aussi signifier 'thé' selon le contexte."
+    },
+    {
+      "id": "6bd7c60f-c25d-4215-86c1-208032a0351a",
+      "korean": "마우스",
+      "romanization": "ma u seu",
+      "translation": "souris",
+      "note": "Mot d'emprunt à l'anglais pour la souris d'ordinateur."
+    },
+    {
+      "id": "fd1ba463-9964-4b1f-99e2-f1c220cf4a12",
+      "korean": "방",
+      "romanization": "bang",
+      "translation": "chambre / pièce",
+      "note": "Se retrouve dans beaucoup de mots composés (ex: 노래방 = karaoké)."
+    },
+    {
+      "id": "d4f4913d-062d-47b8-9889-22c14a0cf092",
+      "korean": "많이",
+      "romanization": "ma ni",
+      "translation": "beaucoup / vraiment",
+      "note": "Se place toujours devant le verbe ou l'adjectif."
+    },
+    {
+      "id": "78d41a53-d5b6-4168-974b-f65af9285bd8",
+      "korean": "잘",
+      "romanization": "jal",
+      "translation": "bien",
+      "note": "Se place devant le verbe (ex: 잘 먹겠습니다 = je vais bien manger)."
+    },
+    {
+      "id": "61f6e735-e082-4833-b33f-f02391c37e6c",
+      "korean": "조금",
+      "romanization": "jo geum",
+      "translation": "un peu / peu",
+      "note": "Souvent prononcé 'jom' (좀) à l'oral."
+    },
+    {
+      "id": "0f06a081-e187-4f59-930a-196c8683d749",
+      "korean": "뭐예요?",
+      "romanization": "mwo ye yo",
+      "translation": "C'est quoi ?",
+      "note": "Contraction de 무엇이에요 (mu eot i e yo)."
+    },
+    {
+      "id": "38fde8d8-2881-4b7a-9ae0-0f8c6a88ba17",
+      "korean": "언제",
+      "romanization": "eon je",
+      "translation": "quand",
+      "note": "Mot interrogatif (ex: 언제 먹어요? = Quand mange-t-on ?)."
+    },
+    {
+      "id": "29a70fc9-2039-42ae-a3df-161758b844fb",
+      "korean": "왜",
+      "romanization": "wae",
+      "translation": "pourquoi",
+      "note": "Mot interrogatif."
+    },
+    {
+      "id": "231d75c9-9dec-44b0-b477-e229add30f33",
+      "korean": "어디예요?",
+      "romanization": "eo di ye yo",
+      "translation": "Où est-ce ?",
+      "note": "Combiné avec un nom : [Lieu] + 어디예요? (ex: 파리 어디예요?)."
+    },
+    {
+      "id": "a796873b-74c6-4bc7-8714-ccd7f9ff7502",
+      "korean": "안",
+      "romanization": "an",
+      "translation": "ne... pas (négation)",
+      "note": "Règle stricte : se place toujours juste devant le verbe qu'il négative (ex: 안 먹어요 = je ne mange pas)."
+    },
+    {
+      "id": "d3fb32f0-b9c1-4cc1-9e89-763e960e2aed",
+      "korean": "저는 피자를 많이 안 먹어요",
+      "romanization": "jeo neun pi ja reul ma ni an meog eo yo",
+      "translation": "Je ne mange pas beaucoup de pizza",
+      "note": "Exemple de structure complète : Sujet (저는) + COD (피자를) + Adverbe (많이) + Négation (안) + Verbe (먹어요)."
+    },
+    {
+      "id": "25313d9e-d44a-4b70-83b1-364fef13d5b2",
+      "korean": "에",
+      "romanization": "e",
+      "translation": "à / en / sur / dans",
+      "note": "Particule de lieu statique ou de destination (ex: 테이블에 = sur la table)."
+    },
+    {
+      "id": "efb3bbe9-90bb-46f2-80e6-97b8a545f264",
+      "korean": "이랑 / 랑",
+      "romanization": "i rang / rang",
+      "translation": "avec / et",
+      "note": "Particule de compagnie. 이랑 (i rang) après consonne, 랑 (rang) après voyelle (ex: 엄마랑 = avec maman)."
+    },
+    {
+      "id": "29525dc6-115e-4579-8e45-43a405d0fa8c",
+      "korean": "가다",
+      "romanization": "ga da",
+      "translation": "aller (infinitif)",
+      "note": "Tous les verbes à l'infinitif se terminent par 다 (da)."
+    },
+    {
+      "id": "cd423796-1864-422c-abeb-3ef50e6264bb",
+      "korean": "하나",
+      "romanization": "ha na",
+      "translation": "un (1)",
+      "note": "Chiffre natif coréen."
+    },
+    {
+      "id": "3f4fd20f-7b64-4e79-bb26-2b732443b599",
+      "korean": "둘",
+      "romanization": "dul",
+      "translation": "deux (2)",
+      "note": "Chiffre natif coréen."
+    },
+    {
+      "id": "41da90eb-4456-4025-b5f1-d95d1e195b27",
+      "korean": "셋",
+      "romanization": "set",
+      "translation": "trois (3)",
+      "note": "Chiffre natif coréen."
+    }
+  ]
+}
