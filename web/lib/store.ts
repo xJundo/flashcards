@@ -20,6 +20,7 @@ import {
   wordProgress,
 } from "@/lib/db/schema"
 import { isId, makeId } from "@/lib/normalize"
+import { sniffImage } from "@/lib/sniff-image"
 import { KNOWN_STREAK } from "@/lib/types"
 import type {
   Author,
@@ -32,6 +33,7 @@ import type {
   GlobalStats,
   Space,
   SpaceSummary,
+  TextAlign,
 } from "@/lib/types"
 
 type CourseRow = typeof courses.$inferSelect
@@ -53,6 +55,7 @@ function toCard(
     phonetic: row.phonetic,
     back: row.back,
     ...(row.note ? { note: row.note } : {}),
+    ...(row.align ? { align: row.align as TextAlign } : {}),
     ...(hasImage?.front ? { frontImage: true } : {}),
     ...(hasImage?.back ? { backImage: true } : {}),
   }
@@ -244,6 +247,110 @@ export async function getCourse(id: string): Promise<Course | null> {
   }
 }
 
+/**
+ * Same as `getCourse`, but a card's `frontImage` / `backImage` becomes the
+ * picture itself — a `data:image/...;base64,...` URL — instead of a bare
+ * `true`, so the downloaded JSON can restore those pictures on re-import.
+ * Skips the extra query entirely when the lesson carries no images.
+ */
+export async function getCourseForExport(id: string): Promise<Course | null> {
+  const course = await getCourse(id)
+  if (!course) return null
+  if (!course.cards.some((card) => card.frontImage || card.backImage))
+    return course
+
+  const rows = await db
+    .select({
+      cardId: cardImages.cardId,
+      side: cardImages.side,
+      contentType: cardImages.contentType,
+      data: cardImages.data,
+    })
+    .from(cardImages)
+    .innerJoin(cards, eq(cards.id, cardImages.cardId))
+    .where(eq(cards.courseId, id))
+
+  const dataUrls = new Map<string, { front?: string; back?: string }>()
+  for (const row of rows) {
+    const entry = dataUrls.get(row.cardId) ?? {}
+    entry[row.side as CardSide] =
+      `data:${row.contentType};base64,${row.data.toString("base64")}`
+    dataUrls.set(row.cardId, entry)
+  }
+
+  return {
+    ...course,
+    cards: course.cards.map((card) => {
+      const images = dataUrls.get(card.id)
+      if (!images) return card
+      return {
+        ...card,
+        ...(images.front ? { frontImage: images.front } : {}),
+        ...(images.back ? { backImage: images.back } : {}),
+      }
+    }),
+  }
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+/** Same cap as a manual image upload — see the per-card image route. */
+export const MAX_CARD_IMAGE_SIZE = 5 * 1024 * 1024
+
+/**
+ * Decodes an embedded picture back into bytes, re-sniffing its real format
+ * from the magic bytes rather than trusting the data URL's claimed mime type
+ * — the same check a manual upload goes through.
+ */
+function decodeImageDataUrl(dataUrl: string): CardImage | null {
+  const match = /^data:[^,]*;base64,([A-Za-z0-9+/]+=*)$/.exec(dataUrl)
+  if (!match) return null
+  const data = Buffer.from(match[1], "base64")
+  if (data.byteLength === 0 || data.byteLength > MAX_CARD_IMAGE_SIZE)
+    return null
+  const contentType = sniffImage(data)
+  return contentType ? { contentType, data, size: data.byteLength } : null
+}
+
+/**
+ * Persists whichever `frontImage` / `backImage` in `sourceCards` are actual
+ * embedded pictures (a card just reconciled from a JSON import, itself
+ * produced by this app's export) rather than plain booleans — restoring the
+ * images a course was exported with. Returns the `cardId:side` pairs that
+ * were actually saved, so callers can report accurate image flags back.
+ */
+async function saveImportedCardImages(
+  tx: Tx,
+  cardIds: string[],
+  sourceCards: Card[]
+): Promise<Set<string>> {
+  const rows: (typeof cardImages.$inferInsert)[] = []
+  sourceCards.forEach((card, index) => {
+    const cardId = cardIds[index]
+    for (const side of ["front", "back"] as const) {
+      const value = side === "front" ? card.frontImage : card.backImage
+      if (typeof value !== "string") continue
+      const image = decodeImageDataUrl(value)
+      if (image) rows.push({ cardId, side, ...image })
+    }
+  })
+  if (rows.length === 0) return new Set()
+
+  await tx
+    .insert(cardImages)
+    .values(rows)
+    .onConflictDoUpdate({
+      target: [cardImages.cardId, cardImages.side],
+      set: {
+        data: sql`excluded.data`,
+        contentType: sql`excluded.content_type`,
+        size: sql`excluded.size`,
+        uploadedAt: new Date(),
+      },
+    })
+  return new Set(rows.map((row) => `${row.cardId}:${row.side}`))
+}
+
 /** Creates the lesson and its words in one go. Only used on import/creation. */
 export async function saveCourse(
   course: Omit<Course, "owner">,
@@ -263,17 +370,29 @@ export async function saveCourse(
       })
       .returning()
 
-    if (course.cards.length > 0) {
-      await tx.insert(cards).values(
-        course.cards.map((card, position) => ({
-          id: isId(card.id) ? card.id : makeId(),
-          courseId: row.id,
-          front: card.front,
-          phonetic: card.phonetic,
-          back: card.back,
-          note: card.note ?? null,
-          position,
-        }))
+    // Always fresh ids: this creates a brand-new course, so an id carried
+    // over from wherever the JSON came from (another course's export, most
+    // often) must never be reused — it would either collide with the card it
+    // was exported from or, worse, silently inherit that card's progress and
+    // images.
+    const cardRows = course.cards.map((card, position) => ({
+      id: makeId(),
+      courseId: row.id,
+      front: card.front,
+      phonetic: card.phonetic,
+      back: card.back,
+      note: card.note ?? null,
+      align: card.align ?? null,
+      position,
+    }))
+
+    let savedImages = new Set<string>()
+    if (cardRows.length > 0) {
+      await tx.insert(cards).values(cardRows)
+      savedImages = await saveImportedCardImages(
+        tx,
+        cardRows.map((cardRow) => cardRow.id),
+        course.cards
       )
     }
 
@@ -284,7 +403,18 @@ export async function saveCourse(
 
     return {
       ...toCourseShell(row, toAuthor(owner ?? null)),
-      cards: course.cards,
+      cards: cardRows.map((cardRow) => ({
+        id: cardRow.id,
+        front: cardRow.front,
+        phonetic: cardRow.phonetic,
+        back: cardRow.back,
+        ...(cardRow.note ? { note: cardRow.note } : {}),
+        ...(cardRow.align ? { align: cardRow.align as TextAlign } : {}),
+        ...(savedImages.has(`${cardRow.id}:front`)
+          ? { frontImage: true }
+          : {}),
+        ...(savedImages.has(`${cardRow.id}:back`) ? { backImage: true } : {}),
+      })),
       hasSheet: false,
     }
   })
@@ -361,20 +491,22 @@ export async function updateCourse(
       await tx.delete(cards).where(inArray(cards.id, removed))
     }
 
-    if (next.cards.length > 0) {
+    const nextCardRows = next.cards.map((card, position) => ({
+      id: isId(card.id) ? card.id : makeId(),
+      courseId: id,
+      front: card.front,
+      phonetic: card.phonetic,
+      back: card.back,
+      note: card.note ?? null,
+      align: card.align ?? null,
+      position,
+    }))
+
+    let savedImages = new Set<string>()
+    if (nextCardRows.length > 0) {
       await tx
         .insert(cards)
-        .values(
-          next.cards.map((card, position) => ({
-            id: isId(card.id) ? card.id : makeId(),
-            courseId: id,
-            front: card.front,
-            phonetic: card.phonetic,
-            back: card.back,
-            note: card.note ?? null,
-            position,
-          }))
-        )
+        .values(nextCardRows)
         .onConflictDoUpdate({
           target: cards.id,
           set: {
@@ -382,14 +514,44 @@ export async function updateCourse(
             phonetic: sql`excluded.phonetic`,
             back: sql`excluded.back`,
             note: sql`excluded.note`,
+            align: sql`excluded.align`,
             position: sql`excluded.position`,
           },
         })
+      // Only reconciles images that arrived as embedded data (a JSON import
+      // of a course this app exported) — an existing card's `frontImage` /
+      // `backImage` is already a plain boolean, so it's left untouched here.
+      savedImages = await saveImportedCardImages(
+        tx,
+        nextCardRows.map((cardRow) => cardRow.id),
+        next.cards
+      )
     }
 
     return {
       ...toCourseShell(updated, toAuthor(row.owner)),
-      cards: next.cards,
+      cards: next.cards.map((card, index) => {
+        const cardRow = nextCardRows[index]
+        const existingFlags = imageFlags.get(card.id)
+        const frontImage =
+          typeof card.frontImage === "string"
+            ? savedImages.has(`${cardRow.id}:front`)
+            : Boolean(card.frontImage ?? existingFlags?.front)
+        const backImage =
+          typeof card.backImage === "string"
+            ? savedImages.has(`${cardRow.id}:back`)
+            : Boolean(card.backImage ?? existingFlags?.back)
+        return {
+          id: cardRow.id,
+          front: cardRow.front,
+          phonetic: cardRow.phonetic,
+          back: cardRow.back,
+          ...(cardRow.note ? { note: cardRow.note } : {}),
+          ...(cardRow.align ? { align: cardRow.align as TextAlign } : {}),
+          ...(frontImage ? { frontImage: true } : {}),
+          ...(backImage ? { backImage: true } : {}),
+        }
+      }),
       hasSheet,
     }
   })

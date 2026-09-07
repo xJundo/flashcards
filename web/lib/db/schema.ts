@@ -218,6 +218,8 @@ export const cards = pgTable(
     phonetic: text("phonetic").notNull().default(""),
     back: text("back").notNull().default(""),
     note: text("note"),
+    /** Text alignment for both faces' text. `null` means the default: centered. */
+    align: text("align", { enum: ["left", "center", "right", "justify"] }),
     /** Rank in the lesson: the note's own order is meaningful. */
     position: integer("position").notNull(),
   },

@@ -38,11 +38,20 @@ export async function POST(request: Request, { params }: Params) {
     )
   }
 
+  const addedIds = new Set(added.map((word) => word.id))
   const course = await updateCourse(id, (current) => ({
     ...current,
     cards: [...current.cards, ...added],
   }))
   if (!course)
     return NextResponse.json({ error: "Cours introuvable." }, { status: 404 })
-  return NextResponse.json({ course, added }, { status: 201 })
+  // Echoes back what was actually persisted (an image flag, not its bytes),
+  // not the raw, possibly heavy, request payload.
+  return NextResponse.json(
+    {
+      course,
+      added: course.cards.filter((card) => addedIds.has(card.id)),
+    },
+    { status: 201 }
+  )
 }

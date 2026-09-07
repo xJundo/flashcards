@@ -6,6 +6,7 @@ import {
   cardBelongsToCourse,
   deleteCardImage,
   getCardImage,
+  MAX_CARD_IMAGE_SIZE,
   saveCardImage,
 } from "@/lib/store"
 import type { CardSide } from "@/lib/store"
@@ -13,8 +14,6 @@ import type { CardSide } from "@/lib/store"
 export const dynamic = "force-dynamic"
 
 type Params = { params: Promise<{ id: string; wordId: string; side: string }> }
-
-const MAX_SIZE = 5 * 1024 * 1024
 
 function parseSide(value: string): CardSide | null {
   return value === "front" || value === "back" ? value : null
@@ -63,7 +62,7 @@ export async function POST(request: Request, { params }: Params) {
       { error: "Fournis une image sous le champ `file`." },
       { status: 400 }
     )
-  if (file.size > MAX_SIZE)
+  if (file.size > MAX_CARD_IMAGE_SIZE)
     return NextResponse.json(
       { error: "L'image dépasse la taille maximale (5 Mo)." },
       { status: 413 }

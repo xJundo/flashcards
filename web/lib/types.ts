@@ -1,3 +1,8 @@
+/** How a card's front/back text (and note) is aligned. `undefined` means centered. */
+export type TextAlign = "left" | "center" | "right" | "justify"
+
+export const TEXT_ALIGNS: TextAlign[] = ["left", "center", "right", "justify"]
+
 export type Card = {
   id: string
   front: string
@@ -5,9 +10,17 @@ export type Card = {
   phonetic: string
   back: string
   note?: string
-  /** Whether that face carries an uploaded image, alongside or instead of text. */
-  frontImage?: boolean
-  backImage?: boolean
+  /** Alignment for the card's text. Optional on import — defaults to centered. */
+  align?: TextAlign
+  /**
+   * Whether that face carries an uploaded image, alongside or instead of
+   * text. On export, and on import of a course exported this way, this
+   * carries the image itself instead — a `data:image/...;base64,...` URL —
+   * so downloading a course and re-importing that same JSON restores its
+   * pictures.
+   */
+  frontImage?: boolean | string
+  backImage?: boolean | string
 }
 
 /** How a learner appears to everyone else: the handle, never the email. */

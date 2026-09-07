@@ -30,5 +30,8 @@
 
 # Other
 1. Faire de cette appli une appli générique de flashcards, pas forcément la langue coréenne. (En gros, une page d'accueil avec un dossier / space de langues, et dans chaque langue, des cours de flashcards (qui peuvent être imbriqués dans des dossiers etc), et une autre page ou c'est juste un truc sur la face recto, un truc sur la face verso, la possibilité d'ajouter une image en tant que recto ou verso, et une note supplémentaire comme pour les langues.). [x]
-2. rajouter des images sur les dossiers / spaces en mode bannière, et changer les couleurs des dossiers / spaces pour que ce soit plus joli. [ ]
-3. à l'export en json, il faut aussi exporter l'image et qu'elle soit réimportable avec le json mode [ ]
+2. rajouter des images sur les dossiers / spaces en mode bannière, et changer les couleurs des dossiers / spaces pour que ce soit plus joli. [x]
+3. à l'export en json, il faut aussi exporter l'image et qu'elle soit réimportable avec le json mode [x]
+4. l'image doit etre bien plus grande, le texte doit etre plus petit. [x]
+5. Possibilité de choisir l'alignement du texte dans le champs json (optionnel, si pas spécifié, centré par défaut). [x]
+6. mettre un schéma du json possible pour le copier coller et le donner à une ia pour qu'il génère un truc.

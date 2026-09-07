@@ -23,12 +23,14 @@ export async function PATCH(request: Request, { params }: Params) {
       found = true
       // Rebuilt field by field so that clearing `note` drops the key entirely.
       const note = (body.note ?? word.note ?? "").trim()
+      const align = body.align ?? word.align
       return {
         id: word.id,
         front: (body.front ?? word.front).trim(),
         phonetic: (body.phonetic ?? word.phonetic).trim(),
         back: (body.back ?? word.back).trim(),
         ...(note ? { note } : {}),
+        ...(align ? { align } : {}),
       }
     }),
   }))

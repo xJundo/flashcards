@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server"
 
-import { getCourse } from "@/lib/store"
+import { getCourseForExport } from "@/lib/store"
 
 export const dynamic = "force-dynamic"
 
 type Params = { params: Promise<{ id: string }> }
 
-/** Downloads the lesson exactly as stored on disk. */
+/**
+ * Downloads the lesson exactly as stored on disk — card images included, as
+ * embedded `data:image/...;base64,...` URLs, so re-importing this same file
+ * restores them too.
+ */
 export async function GET(_request: Request, { params }: Params) {
   const { id } = await params
-  const course = await getCourse(id)
+  const course = await getCourseForExport(id)
   if (!course)
     return NextResponse.json({ error: "Cours introuvable." }, { status: 404 })
 

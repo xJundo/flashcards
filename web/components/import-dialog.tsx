@@ -125,6 +125,14 @@ export function ImportDialog({
       (total, course) => total + course.words.length,
       0
     ) ?? 0
+  const imageCount =
+    preview?.courses.reduce(
+      (total, course) =>
+        total +
+        course.words.filter((word) => word.frontImage || word.backImage)
+          .length,
+      0
+    ) ?? 0
 
   async function readFile(file: File | undefined) {
     if (!file) return
@@ -183,7 +191,8 @@ export function ImportDialog({
           <DialogTitle>Importer un cours</DialogTitle>
           <DialogDescription>
             Colle du JSON, ou directement le texte brut copié depuis Google
-            Docs.
+            Docs. Un JSON exporté depuis cette appli réimporte aussi ses
+            images.
           </DialogDescription>
         </DialogHeader>
 
@@ -263,6 +272,11 @@ export function ImportDialog({
                 {preview.courses.length > 1 && (
                   <Badge variant="secondary">
                     {preview.courses.length} cours
+                  </Badge>
+                )}
+                {imageCount > 0 && (
+                  <Badge variant="secondary">
+                    {imageCount} image{imageCount > 1 ? "s" : ""}
                   </Badge>
                 )}
                 {preview.skipped.length > 0 && (

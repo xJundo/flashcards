@@ -78,6 +78,13 @@
       "when": 1788764956034,
       "tag": "0010_add_space_folder_colors_banners",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788781044725,
+      "tag": "0011_add_card_text_align",
+      "breakpoints": true
     }
   ]
 }

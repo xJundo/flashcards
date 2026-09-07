@@ -2,8 +2,25 @@ import { NextResponse } from "next/server"
 
 import { normalizeImportedCourses } from "@/lib/normalize"
 import { parseNotes } from "@/lib/parse-notes"
+import type { ParsedImport } from "@/lib/normalize"
 
 export const dynamic = "force-dynamic"
+
+/**
+ * The preview only needs to know a card has a picture, not the picture
+ * itself — dropping the embedded data keeps this dry-run response light even
+ * while the user is still typing/pasting a JSON export with images in it.
+ */
+function stripImageData(courses: ParsedImport[]): ParsedImport[] {
+  return courses.map((course) => ({
+    ...course,
+    words: course.words.map((word) => ({
+      ...word,
+      ...(word.frontImage ? { frontImage: true } : {}),
+      ...(word.backImage ? { backImage: true } : {}),
+    })),
+  }))
+}
 
 /**
  * Dry-run of the importers: returns what *would* be created, without writing.
@@ -38,7 +55,7 @@ export async function POST(request: Request) {
       }
     }
     return NextResponse.json({
-      courses: normalizeImportedCourses(payload),
+      courses: stripImageData(normalizeImportedCourses(payload)),
       skipped: [],
     })
   }

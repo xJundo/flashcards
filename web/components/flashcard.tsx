@@ -5,7 +5,14 @@ import { Volume2Icon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { Card, FrontSide } from "@/lib/types"
+import type { Card, FrontSide, TextAlign } from "@/lib/types"
+
+const ALIGN_CLASS: Record<TextAlign, string> = {
+  left: "text-left",
+  center: "text-center",
+  right: "text-right",
+  justify: "text-justify",
+}
 
 /** The side a card actually shows, once `random` has been resolved. */
 export type Side = Exclude<FrontSide, "random">
@@ -123,64 +130,100 @@ function CardFace({
 }) {
   const text = side === "front" ? word.front : word.back
   const image = side === "front" ? word.frontImage : word.backImage
+  // The recto is always a short word or phrase — it stays centered no
+  // matter what alignment the word's back/note are set to.
+  const textAlign: TextAlign = side === "front" ? "center" : (word.align ?? "center")
+  const noteAlign: TextAlign = word.align ?? "center"
 
   return (
     <div
       className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-y-auto rounded-xl border bg-card p-6 text-card-foreground shadow-sm [backface-visibility:hidden]",
+        "absolute inset-0 flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm [backface-visibility:hidden]",
         className
       )}
     >
+      <div
+        // `safe center` falls back to top-alignment once content overflows,
+        // so a tall image never gets centered half off-screen, unreachable
+        // by scrolling, and hidden behind the badge above it.
+        // Chrome/Firefox stop culling the parent's backface once a
+        // scrollable descendant exists inside it, so the other face bleeds
+        // through (mirrored) mid-flip unless this is hidden too.
+        className="flex min-h-0 flex-1 flex-col items-center gap-3 overflow-y-auto p-6 pt-10 [backface-visibility:hidden] [justify-content:safe_center]"
+      >
+        {side === "audio" ? (
+          <Volume2Icon className="size-14 text-muted-foreground" />
+        ) : (
+          <>
+            {image && (
+              // Served from our own API, not an optimizable static asset.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/api/courses/${courseId}/words/${word.id}/image/${side}`}
+                alt=""
+                className="max-h-72 max-w-full rounded-lg object-contain sm:max-h-96 lg:max-h-[28rem]"
+              />
+            )}
+            {text && (
+              <p
+                className={cn(
+                  "w-full font-semibold whitespace-pre-line",
+                  ALIGN_CLASS[textAlign],
+                  // `text-balance` only makes sense for short, centered text —
+                  // a justified or side-aligned paragraph wraps normally.
+                  textAlign === "center" && "text-balance",
+                  image
+                    ? "text-sm sm:text-base"
+                    : side === "front"
+                      ? "text-4xl sm:text-5xl lg:text-6xl"
+                      : textAlign === "center"
+                        ? "text-2xl sm:text-3xl lg:text-4xl"
+                        : // A long, side-aligned answer reads as a wall of
+                          // text at the same size as a short centered one —
+                          // keep it close to the image case's small size.
+                          "text-base sm:text-lg"
+                )}
+                lang={side === "front" ? (speechLocale ?? undefined) : undefined}
+              >
+                {text}
+              </p>
+            )}
+            {!text && !image && (
+              <p className="text-center text-4xl font-semibold text-muted-foreground">
+                —
+              </p>
+            )}
+          </>
+        )}
+        {side !== "back" && romanization && word.phonetic && (
+          <p className="text-center text-muted-foreground">{word.phonetic}</p>
+        )}
+        {reveal && side === "front" && word.back && (
+          <p className="text-center text-muted-foreground">{word.back}</p>
+        )}
+        {note && word.note && (
+          <p
+            className={cn(
+              "w-full text-sm whitespace-pre-line text-muted-foreground",
+              // A justified or side-aligned note reads better filling the
+              // card's width — a narrower column stretches justified spaces
+              // into ugly gaps. Centered notes keep a prose-width column.
+              noteAlign === "center" && "max-w-prose",
+              ALIGN_CLASS[noteAlign],
+              noteAlign === "center" && "text-pretty"
+            )}
+          >
+            {word.note}
+          </p>
+        )}
+      </div>
+      {/* After the scrollable content in DOM, not `z-10`, so it paints on
+          top without a z-index — which breaks backface culling on a
+          flipped 3D element in Chrome/Firefox. */}
       <Badge variant="secondary" className="absolute top-3 left-3">
         {FACE_LABEL[side]}
       </Badge>
-      {side === "audio" ? (
-        <Volume2Icon className="size-14 text-muted-foreground" />
-      ) : (
-        <>
-          {image && (
-            // Served from our own API, not an optimizable static asset.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={`/api/courses/${courseId}/words/${word.id}/image/${side}`}
-              alt=""
-              className="max-h-40 max-w-full rounded-lg object-contain sm:max-h-56"
-            />
-          )}
-          {text && (
-            <p
-              className={cn(
-                "text-center font-semibold text-balance",
-                image
-                  ? "text-lg sm:text-xl"
-                  : side === "front"
-                    ? "text-4xl sm:text-5xl lg:text-6xl"
-                    : "text-2xl sm:text-3xl lg:text-4xl"
-              )}
-              lang={side === "front" ? (speechLocale ?? undefined) : undefined}
-            >
-              {text}
-            </p>
-          )}
-          {!text && !image && (
-            <p className="text-center text-4xl font-semibold text-muted-foreground">
-              —
-            </p>
-          )}
-        </>
-      )}
-      {side !== "back" && romanization && word.phonetic && (
-        <p className="text-center text-muted-foreground">{word.phonetic}</p>
-      )}
-      {reveal && side === "front" && word.back && (
-        <p className="text-center text-muted-foreground">{word.back}</p>
-      )}
-      {note && word.note && (
-        <p className="max-w-prose text-center text-sm text-pretty text-muted-foreground">
-          {word.note}
-        </p>
-      )}
-      <span className="absolute bottom-3 text-xs text-muted-foreground">
+      <span className="shrink-0 pb-3 text-center text-xs text-muted-foreground">
         {hint}
       </span>
     </div>

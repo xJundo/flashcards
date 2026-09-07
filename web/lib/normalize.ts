@@ -1,4 +1,5 @@
-import type { Card, Course } from "@/lib/types"
+import { TEXT_ALIGNS } from "@/lib/types"
+import type { Card, Course, TextAlign } from "@/lib/types"
 
 /**
  * Field aliases accepted on import. Notes exported from Google Docs (or run
@@ -62,6 +63,16 @@ const NOTE_KEYS = [
   "regle",
   "astuce",
 ]
+const FRONT_IMAGE_KEYS = ["frontimage", "rectoimage", "imagerecto", "imagefront"]
+const BACK_IMAGE_KEYS = ["backimage", "versoimage", "imageverso", "imageback"]
+const ALIGN_KEYS = ["align", "alignment", "textalign", "alignement"]
+
+/**
+ * What the export endpoint embeds for a card's picture. Only this exact
+ * shape is accepted on import — a bare URL or a stray `true`/`false` is
+ * ignored — so this only ever round-trips an image this app exported itself.
+ */
+const IMAGE_DATA_URL = /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/]+=*$/
 
 export function makeId(): string {
   return globalThis.crypto.randomUUID()
@@ -122,6 +133,34 @@ function pickAll(source: Record<string, unknown>, keys: string[]): string[] {
   return values
 }
 
+/** An embedded picture, in the exact shape the export endpoint writes it. */
+function pickImageData(
+  source: Record<string, unknown>,
+  keys: string[]
+): string | undefined {
+  const normalized = index(source)
+  for (const key of keys) {
+    const value = normalized.get(normalizeKey(key))
+    if (typeof value === "string" && IMAGE_DATA_URL.test(value.trim()))
+      return value.trim()
+  }
+  return undefined
+}
+
+/** `align: "Justify"`, `"JUSTIFY"`, etc. all resolve the same way; anything
+ *  else (a typo, an unsupported value) is dropped rather than rejecting the
+ *  whole word — it just falls back to the centered default. */
+function pickAlign(source: Record<string, unknown>): TextAlign | undefined {
+  const normalized = index(source)
+  for (const key of ALIGN_KEYS) {
+    const value = normalized.get(normalizeKey(key))
+    if (typeof value !== "string") continue
+    const align = value.trim().toLowerCase()
+    if (TEXT_ALIGNS.includes(align as TextAlign)) return align as TextAlign
+  }
+  return undefined
+}
+
 /** Turns one loosely-typed entry into a `Card`, or `null` if it carries nothing. */
 export function normalizeWord(input: unknown): Card | null {
   if (typeof input === "string") {
@@ -135,11 +174,26 @@ export function normalizeWord(input: unknown): Card | null {
   const phonetic = pick(source, PHONETIC_KEYS)
   const back = pick(source, BACK_KEYS)
   const note = pickAll(source, NOTE_KEYS).join(" · ")
+  const frontImage = pickImageData(source, FRONT_IMAGE_KEYS)
+  const backImage = pickImageData(source, BACK_IMAGE_KEYS)
+  const align = pickAlign(source)
   if (!front && !back) return null
 
-  // An imported file may carry ids from elsewhere; only a real UUID is kept.
-  const id = isId(source.id) ? source.id : makeId()
-  return { id, front, phonetic, back, ...(note ? { note } : {}) }
+  // Always a fresh id: every caller either creates a brand-new course or
+  // appends brand-new cards, never reconciles against an existing one by id.
+  // Trusting an id carried over in the JSON — typically another card's own
+  // id, from a previous export — would risk colliding with it, or silently
+  // inheriting its progress and images.
+  return {
+    id: makeId(),
+    front,
+    phonetic,
+    back,
+    ...(note ? { note } : {}),
+    ...(frontImage ? { frontImage } : {}),
+    ...(backImage ? { backImage } : {}),
+    ...(align ? { align } : {}),
+  }
 }
 
 export function normalizeWords(input: unknown): Card[] {
