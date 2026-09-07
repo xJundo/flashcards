@@ -1,6 +1,6 @@
 import { makeId, normalizeDate } from "@/lib/normalize"
 import type { ParsedImport } from "@/lib/normalize"
-import type { Word } from "@/lib/types"
+import type { Card } from "@/lib/types"
 
 const HANGUL = /[ᄀ-ᇿ㄰-㆏ꥠ-꥿가-힯]/
 
@@ -45,11 +45,13 @@ function extractParenthesis(value: string): { text: string; inner: string } {
   return { text: match[1].trim(), inner: match[2].trim() }
 }
 
-function toWord(parts: string[]): Word | null {
+function toWord(parts: string[]): Card | null {
   if (parts.length === 0) return null
 
   let [first, second, third] = parts
-  // A line may put the translation first; the hangul side is the reliable anchor.
+  // A line may put the translation first; hangul (when present) is the
+  // reliable anchor for which side is the front — a no-op for non-Korean
+  // text, where the columns are simply read in their given order.
   if (
     parts.length >= 2 &&
     !hasHangul(first) &&
@@ -59,35 +61,35 @@ function toWord(parts: string[]): Word | null {
   }
 
   const head = extractParenthesis(first)
-  const korean = head.text
-  let romanization = head.inner
-  let translation = ""
+  const front = head.text
+  let phonetic = head.inner
+  let back = ""
 
   if (parts.length >= 3) {
-    romanization = romanization || second
-    translation = third
+    phonetic = phonetic || second
+    back = third
   } else if (parts.length === 2) {
     const tail = extractParenthesis(second)
     if (tail.inner) {
-      translation = tail.text
-      romanization = romanization || tail.inner
+      back = tail.text
+      phonetic = phonetic || tail.inner
     } else if (
-      !romanization &&
+      !phonetic &&
       !hasHangul(second) &&
-      looksRomanized(second, korean)
+      looksRomanized(second, front)
     ) {
-      romanization = second
+      phonetic = second
     } else {
-      translation = second
+      back = second
     }
   }
 
-  if (!korean && !translation) return null
+  if (!front && !back) return null
   return {
     id: makeId(),
-    korean,
-    romanization,
-    translation,
+    front,
+    phonetic,
+    back,
     ...(parts.length > 3 ? { note: parts.slice(3).join(" — ") } : {}),
   }
 }
@@ -97,10 +99,10 @@ function toWord(parts: string[]): Word | null {
  * translation. Romanised Korean is lowercase, unaccented and roughly as long as
  * the hangul it transcribes.
  */
-function looksRomanized(value: string, korean: string): boolean {
-  if (!korean) return false
+function looksRomanized(value: string, front: string): boolean {
+  if (!front) return false
   if (!/^[a-z][a-z\s'-]*$/.test(value)) return false
-  return value.replace(/\s/g, "").length <= korean.replace(/\s/g, "").length * 4
+  return value.replace(/\s/g, "").length <= front.replace(/\s/g, "").length * 4
 }
 
 export type ParseNotesResult = ParsedImport & { skipped: string[] }
@@ -116,7 +118,7 @@ export function parseNotes(input: string): ParseNotesResult {
     .map((line) => line.replace(/^\s*(?:[-*•‣▪]|\d+[.)])\s+/, "").trim())
     .filter(Boolean)
 
-  const words: Word[] = []
+  const words: Card[] = []
   const skipped: string[] = []
   let title: string | undefined
   let date: string | undefined

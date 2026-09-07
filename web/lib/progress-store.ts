@@ -4,11 +4,11 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm"
 
 import { db } from "@/lib/db"
 import {
+  cards,
   courseCompletions,
   runWords,
   runs,
   wordProgress,
-  words,
 } from "@/lib/db/schema"
 import { isId } from "@/lib/normalize"
 import { KNOWN_STREAK } from "@/lib/types"
@@ -51,12 +51,12 @@ async function engraveCompletion(
       total: sql<number>`count(*)::int`,
       known: sql<number>`count(*) filter (where ${wordProgress.streak} >= ${KNOWN_STREAK})::int`,
     })
-    .from(words)
+    .from(cards)
     .leftJoin(
       wordProgress,
-      and(eq(wordProgress.wordId, words.id), eq(wordProgress.userId, userId))
+      and(eq(wordProgress.wordId, cards.id), eq(wordProgress.userId, userId))
     )
-    .where(eq(words.courseId, courseId))
+    .where(eq(cards.courseId, courseId))
 
   // An empty lesson is not an achievement.
   if (!row || row.total === 0 || row.known < row.total) return
@@ -98,7 +98,7 @@ export async function getProgress(
 
   // One extra query rather than one per series: the recap needs every card of
   // every listed run, and there are at most `MAX_RUNS` of them.
-  const cards = history.length
+  const answeredCards = history.length
     ? await db
         .select()
         .from(runWords)
@@ -112,7 +112,7 @@ export async function getProgress(
     : []
 
   const byRun = new Map<string, { known: string[]; failed: string[] }>()
-  for (const card of cards) {
+  for (const card of answeredCards) {
     const entry = byRun.get(card.runId) ?? { known: [], failed: [] }
     entry[card.known ? "known" : "failed"].push(card.wordId)
     byRun.set(card.runId, entry)
@@ -161,10 +161,10 @@ export async function recordRun(
     const belongs = new Set(
       (
         await tx
-          .select({ id: words.id })
-          .from(words)
+          .select({ id: cards.id })
+          .from(cards)
           .where(
-            and(eq(words.courseId, courseId), inArray(words.id, submitted))
+            and(eq(cards.courseId, courseId), inArray(cards.id, submitted))
           )
       ).map((row) => row.id)
     )
@@ -272,9 +272,9 @@ export async function markAcquired(
   if (!isId(courseId) || !isId(wordId)) return
 
   const [word] = await db
-    .select({ id: words.id })
-    .from(words)
-    .where(and(eq(words.id, wordId), eq(words.courseId, courseId)))
+    .select({ id: cards.id })
+    .from(cards)
+    .where(and(eq(cards.id, wordId), eq(cards.courseId, courseId)))
   if (!word) return
 
   await db

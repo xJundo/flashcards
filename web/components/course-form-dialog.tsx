@@ -13,16 +13,35 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
 import { api } from "@/lib/api"
+import { COMMON_LOCALES } from "@/lib/locales"
 import type { CourseSummary } from "@/lib/types"
+
+const CUSTOM_LOCALE = "__custom__"
+const NO_LOCALE = "__none__"
 
 type CourseFormDialogProps = {
   /** Omit to create a new lesson. */
-  course?: Pick<CourseSummary, "id" | "title" | "date">
+  course?: Pick<CourseSummary, "id" | "title" | "date" | "speechLocale">
+  /** Where a new lesson is filed. Ignored when editing an existing one. */
+  spaceId?: string
+  folderId?: string | null
   /** The trigger. Omit when the parent drives `open` itself. */
   children?: React.ReactNode
   /** Set to control the dialog from the parent; leave out to self-manage. */
@@ -30,8 +49,18 @@ type CourseFormDialogProps = {
   onOpenChange?: (open: boolean) => void
 }
 
+/** Whichever preset matches `locale`, or the "other" option for a custom one. */
+function localePreset(locale: string | null): string {
+  if (!locale) return NO_LOCALE
+  return COMMON_LOCALES.some((option) => option.value === locale)
+    ? locale
+    : CUSTOM_LOCALE
+}
+
 export function CourseFormDialog({
   course,
+  spaceId,
+  folderId = null,
   children,
   open: openProp,
   onOpenChange,
@@ -42,6 +71,12 @@ export function CourseFormDialog({
   const [pending, setPending] = React.useState(false)
   const [title, setTitle] = React.useState(course?.title ?? "")
   const [date, setDate] = React.useState(course?.date ?? "")
+  const [preset, setPreset] = React.useState(() =>
+    localePreset(course?.speechLocale ?? null)
+  )
+  const [customLocale, setCustomLocale] = React.useState(
+    () => course?.speechLocale ?? ""
+  )
 
   /**
    * Refill on open, so a cancelled edit is discarded. Done while rendering
@@ -54,6 +89,8 @@ export function CourseFormDialog({
     if (open) {
       setTitle(course?.title ?? "")
       setDate(course?.date ?? new Date().toISOString().slice(0, 10))
+      setPreset(localePreset(course?.speechLocale ?? null))
+      setCustomLocale(course?.speechLocale ?? "")
     }
   }
 
@@ -62,6 +99,13 @@ export function CourseFormDialog({
     if (openProp === undefined) setSelfOpen(next)
   }
 
+  const speechLocale =
+    preset === NO_LOCALE
+      ? null
+      : preset === CUSTOM_LOCALE
+        ? customLocale.trim() || null
+        : preset
+
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setPending(true)
@@ -69,7 +113,7 @@ export function CourseFormDialog({
       if (course) {
         await api(`/api/courses/${course.id}`, {
           method: "PATCH",
-          body: JSON.stringify({ title, date }),
+          body: JSON.stringify({ title, date, speechLocale }),
         })
         toast.add({ title: "Cours mis à jour", type: "success" })
       } else {
@@ -77,7 +121,13 @@ export function CourseFormDialog({
           "/api/courses",
           {
             method: "POST",
-            body: JSON.stringify({ title, date }),
+            body: JSON.stringify({
+              title,
+              date,
+              spaceId,
+              folderId,
+              speechLocale,
+            }),
           }
         )
         toast.add({ title: "Cours créé", type: "success" })
@@ -136,6 +186,38 @@ export function CourseFormDialog({
                 value={date}
                 onChange={(event) => setDate(event.target.value)}
               />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="course-locale">Langue parlée</FieldLabel>
+              <Select
+                value={preset}
+                onValueChange={(value) => setPreset(String(value))}
+              >
+                <SelectTrigger id="course-locale" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_LOCALE}>Aucune</SelectItem>
+                  {COMMON_LOCALES.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={CUSTOM_LOCALE}>Autre…</SelectItem>
+                </SelectContent>
+              </Select>
+              {preset === CUSTOM_LOCALE && (
+                <Input
+                  value={customLocale}
+                  onChange={(event) => setCustomLocale(event.target.value)}
+                  placeholder="nl-NL"
+                  className="mt-2"
+                />
+              )}
+              <FieldDescription>
+                Active la prononciation audio sur les cartes de ce cours. Laisse
+                « Aucune » pour un cours sans langue à prononcer.
+              </FieldDescription>
             </Field>
           </FieldGroup>
           <DialogFooter>

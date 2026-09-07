@@ -1,12 +1,7 @@
-import Link from "next/link"
 import { notFound } from "next/navigation"
-import {
-  ArrowLeftIcon,
-  DownloadIcon,
-  PencilIcon,
-  UsersIcon,
-} from "lucide-react"
+import { DownloadIcon, PencilIcon, UsersIcon } from "lucide-react"
 
+import { Breadcrumbs } from "@/components/breadcrumbs"
 import { CourseFinishers } from "@/components/course-finishers"
 import { CourseFormDialog } from "@/components/course-form-dialog"
 import { CoursePractice } from "@/components/course-practice"
@@ -19,7 +14,14 @@ import { Separator } from "@/components/ui/separator"
 import { formatDate } from "@/lib/api"
 import { ProgressProvider } from "@/lib/progress"
 import { currentUser } from "@/lib/session"
-import { canWrite, getCourse, getViewerState, listFinishers } from "@/lib/store"
+import {
+  canWrite,
+  getBreadcrumb,
+  getCourse,
+  getSpace,
+  getViewerState,
+  listFinishers,
+} from "@/lib/store"
 
 export const dynamic = "force-dynamic"
 
@@ -29,7 +31,7 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params
   const course = await getCourse(id)
   return {
-    title: course ? `${course.title} — Flashcards coréen` : "Cours introuvable",
+    title: course ? `${course.title} — Flashcards` : "Cours introuvable",
   }
 }
 
@@ -38,25 +40,30 @@ export default async function CoursePage({ params }: Props) {
   const [course, user] = await Promise.all([getCourse(id), currentUser()])
   if (!course) notFound()
 
-  const [editable, viewer, finishers] = await Promise.all([
+  const space = await getSpace(course.spaceId)
+  if (!space) notFound()
+
+  const [editable, viewer, finishers, breadcrumb] = await Promise.all([
     canWrite(course.id, user?.id),
     getViewerState(course.id, user?.id),
     listFinishers(course.id),
+    getBreadcrumb(space, course.folderId),
   ])
   const owns = Boolean(user && course.owner?.id === user.id)
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-fit"
-          render={<Link href="/" />}
-        >
-          <ArrowLeftIcon data-icon="inline-start" />
-          Tous les cours
-        </Button>
+        <Breadcrumbs
+          items={[
+            ...breadcrumb,
+            {
+              id: course.id,
+              title: course.title,
+              href: `/courses/${course.id}`,
+            },
+          ]}
+        />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-1">
             <p className="text-sm text-muted-foreground">
@@ -97,6 +104,7 @@ export default async function CoursePage({ params }: Props) {
                   id: course.id,
                   title: course.title,
                   date: course.date,
+                  speechLocale: course.speechLocale,
                 }}
               >
                 <Button variant="outline">
@@ -116,17 +124,18 @@ export default async function CoursePage({ params }: Props) {
           <h2 className="text-lg font-semibold tracking-tight">Réviser</h2>
           <CoursePractice
             courseId={course.id}
-            words={course.words}
+            words={course.cards}
             signedIn={Boolean(user)}
             completedAt={viewer.completedAt}
             hasSheet={course.hasSheet}
+            speechLocale={course.speechLocale}
           />
           {/* Public, so it shows for a signed-out reader too — it is the one
               thing about anyone's progress that everyone gets to see. */}
           <CourseFinishers
             finishers={finishers}
             viewerId={user?.id ?? null}
-            wordCount={course.words.length}
+            wordCount={course.cards.length}
           />
         </section>
 
@@ -149,15 +158,16 @@ export default async function CoursePage({ params }: Props) {
               Tous les mots du cours
             </h2>
             <p className="text-sm text-muted-foreground">
-              {course.words.length} mot{course.words.length > 1 ? "s" : ""},
+              {course.cards.length} mot{course.cards.length > 1 ? "s" : ""},
               dans l&apos;ordre de la note.
             </p>
           </div>
           <WordTable
             courseId={course.id}
-            words={course.words}
+            words={course.cards}
             editable={editable}
             tracked={Boolean(user)}
+            speechLocale={course.speechLocale}
           />
         </section>
       </ProgressProvider>

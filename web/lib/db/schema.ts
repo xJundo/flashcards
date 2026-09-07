@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm"
+import type { AnyPgColumn } from "drizzle-orm/pg-core"
 import {
   boolean,
   customType,
@@ -98,6 +99,83 @@ export const verification = pgTable(
 )
 
 /* -------------------------------------------------------------------------- */
+/*  Spaces & folders — the subject a course belongs to, and how it's filed.    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A top-level subject (a language, or anything else worth its own catalogue).
+ * `slug` gives it a stable, readable root URL independent of the title.
+ */
+export const spaces = pgTable("spaces", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  ownerId: text("owner_id").references(() => user.id, { onDelete: "set null" }),
+  /** A palette key (see `lib/colors.ts`), or `null` for the neutral default. */
+  color: text("color"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+/**
+ * The cover banner shown atop a space's card, one per space — a re-upload
+ * replaces it outright, same as `courseSheets`.
+ */
+export const spaceBanners = pgTable("space_banners", {
+  spaceId: uuid("space_id")
+    .primaryKey()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  data: bytea("data").notNull(),
+  contentType: text("content_type").notNull(),
+  size: integer("size").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+})
+
+/**
+ * A folder inside a space, nestable to any depth via `parentId`. `null`
+ * parent means the folder sits at the space's root. Deletion is blocked
+ * app-side while a folder still holds anything — `restrict` here is a
+ * backstop, not the mechanism.
+ */
+export const folders = pgTable(
+  "folders",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    spaceId: uuid("space_id")
+      .notNull()
+      .references(() => spaces.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id").references((): AnyPgColumn => folders.id, {
+      onDelete: "restrict",
+    }),
+    title: text("title").notNull(),
+    /** Rank among siblings. */
+    position: integer("position").notNull().default(0),
+    /** A palette key (see `lib/colors.ts`), or `null` for the neutral default. */
+    color: text("color"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("folders_space_parent_idx").on(
+      table.spaceId,
+      table.parentId,
+      table.position
+    ),
+  ]
+)
+
+/** The cover banner shown atop a folder's card, one per folder. */
+export const folderBanners = pgTable("folder_banners", {
+  folderId: uuid("folder_id")
+    .primaryKey()
+    .references(() => folders.id, { onDelete: "cascade" }),
+  data: bytea("data").notNull(),
+  contentType: text("content_type").notNull(),
+  size: integer("size").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+})
+
+/* -------------------------------------------------------------------------- */
 /*  Lessons                                                                    */
 /* -------------------------------------------------------------------------- */
 
@@ -106,6 +184,19 @@ export const courses = pgTable("courses", {
   title: text("title").notNull(),
   /** Date of the lesson, distinct from `createdAt` (notes are typed up later). */
   date: date("date").notNull(),
+  /** The subject this course files under. */
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  /** `null` means the course sits at the space's root, not inside a folder. */
+  folderId: uuid("folder_id").references(() => folders.id, {
+    onDelete: "set null",
+  }),
+  /**
+   * BCP-47 locale for pronunciation (e.g. `ko-KR`). `null` means the course
+   * carries no spoken-language content, so no TTS UI is shown for it.
+   */
+  speechLocale: text("speech_locale"),
   /**
    * The author. A course outlives its author's account only if we say so —
    * `set null` keeps the lesson readable, with no one able to edit it.
@@ -115,21 +206,43 @@ export const courses = pgTable("courses", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
-export const words = pgTable(
-  "words",
+export const cards = pgTable(
+  "cards",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     courseId: uuid("course_id")
       .notNull()
       .references(() => courses.id, { onDelete: "cascade" }),
-    korean: text("korean").notNull(),
-    romanization: text("romanization").notNull().default(""),
-    translation: text("translation").notNull().default(""),
+    front: text("front").notNull(),
+    /** A generic pronunciation/reading hint — romanization, IPA, anything. */
+    phonetic: text("phonetic").notNull().default(""),
+    back: text("back").notNull().default(""),
     note: text("note"),
     /** Rank in the lesson: the note's own order is meaningful. */
     position: integer("position").notNull(),
   },
-  (table) => [index("words_course_idx").on(table.courseId, table.position)]
+  (table) => [index("cards_course_idx").on(table.courseId, table.position)]
+)
+
+/**
+ * An optional image on one face of a card, keyed by side so front and back
+ * are independent — a card can carry neither, either, or both. Mirrors the
+ * `courseSheets` blob pattern: bytes live outside `cards` so bulk reads of
+ * the deck never carry image data.
+ */
+export const cardImages = pgTable(
+  "card_images",
+  {
+    cardId: uuid("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    side: text("side", { enum: ["front", "back"] }).notNull(),
+    data: bytea("data").notNull(),
+    contentType: text("content_type").notNull(),
+    size: integer("size").notNull(),
+    uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.cardId, table.side] })]
 )
 
 /**
@@ -233,7 +346,7 @@ export const wordProgress = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     wordId: uuid("word_id")
       .notNull()
-      .references(() => words.id, { onDelete: "cascade" }),
+      .references(() => cards.id, { onDelete: "cascade" }),
     courseId: uuid("course_id")
       .notNull()
       .references(() => courses.id, { onDelete: "cascade" }),
@@ -266,7 +379,7 @@ export const runs = pgTable(
     /** `false` when the learner closed the series before the last card. */
     completed: boolean("completed").notNull().default(true),
     /** The face that was shown first, kept so a recap can be read in context. */
-    frontSide: text("front_side").notNull().default("korean"),
+    frontSide: text("front_side").notNull().default("front"),
     finishedAt: timestamp("finished_at").defaultNow().notNull(),
   },
   (table) => [index("runs_course_idx").on(table.userId, table.courseId)]
@@ -281,7 +394,7 @@ export const runWords = pgTable(
       .references(() => runs.id, { onDelete: "cascade" }),
     wordId: uuid("word_id")
       .notNull()
-      .references(() => words.id, { onDelete: "cascade" }),
+      .references(() => cards.id, { onDelete: "cascade" }),
     /** `true` for "acquis", `false` for "à revoir". */
     known: boolean("known").notNull(),
     /** Rank in the deck, so the recap lists the words as they came up. */
@@ -305,12 +418,38 @@ export const accountRelations = relations(account, ({ one }) => ({
   user: one(user, { fields: [account.userId], references: [user.id] }),
 }))
 
+export const spacesRelations = relations(spaces, ({ many, one }) => ({
+  folders: many(folders),
+  courses: many(courses),
+  owner: one(user, { fields: [spaces.ownerId], references: [user.id] }),
+}))
+
+export const foldersRelations = relations(folders, ({ many, one }) => ({
+  space: one(spaces, { fields: [folders.spaceId], references: [spaces.id] }),
+  parent: one(folders, {
+    fields: [folders.parentId],
+    references: [folders.id],
+    relationName: "folderParent",
+  }),
+  children: many(folders, { relationName: "folderParent" }),
+  courses: many(courses),
+}))
+
 export const coursesRelations = relations(courses, ({ many, one }) => ({
-  words: many(words),
+  cards: many(cards),
   editors: many(courseEditors),
   favorites: many(courseFavorites),
   completions: many(courseCompletions),
   owner: one(user, { fields: [courses.ownerId], references: [user.id] }),
+  space: one(spaces, { fields: [courses.spaceId], references: [spaces.id] }),
+  folder: one(folders, {
+    fields: [courses.folderId],
+    references: [folders.id],
+  }),
+}))
+
+export const cardImagesRelations = relations(cardImages, ({ one }) => ({
+  card: one(cards, { fields: [cardImages.cardId], references: [cards.id] }),
 }))
 
 export const courseFavoritesRelations = relations(
@@ -341,9 +480,9 @@ export const courseCompletionsRelations = relations(
   })
 )
 
-export const wordsRelations = relations(words, ({ one }) => ({
+export const cardsRelations = relations(cards, ({ one }) => ({
   course: one(courses, {
-    fields: [words.courseId],
+    fields: [cards.courseId],
     references: [courses.id],
   }),
 }))

@@ -40,10 +40,10 @@ import { toast } from "@/components/ui/toast"
 import { api } from "@/lib/api"
 import { useCourseProgress } from "@/lib/progress"
 import { cn } from "@/lib/utils"
-import type { Word, WordStat } from "@/lib/types"
+import type { Card, WordStat } from "@/lib/types"
 
 /** Columns a learner can order the list by. */
-type SortKey = "korean" | "romanization" | "translation" | "standing"
+type SortKey = "front" | "phonetic" | "back" | "standing"
 
 type Sort = { key: SortKey; dir: "asc" | "desc" }
 
@@ -53,9 +53,9 @@ type Sort = { key: SortKey; dir: "asc" | "desc" }
  * the words needing work, and the acquired ones are one click further.
  */
 const FIRST_DIR: Record<SortKey, "asc" | "desc"> = {
-  korean: "asc",
-  romanization: "asc",
-  translation: "asc",
+  front: "asc",
+  phonetic: "asc",
+  back: "asc",
   standing: "asc",
 }
 
@@ -67,26 +67,29 @@ export function WordTable({
   words,
   editable,
   tracked,
+  speechLocale,
 }: {
   courseId: string
-  words: Word[]
+  words: Card[]
   /** Read-only for visitors without write access on this lesson. */
   editable: boolean
   /** Signed out, no word has a standing — the whole column would be empty. */
   tracked: boolean
+  /** BCP-47 locale of the course's spoken language, or `null` for none. */
+  speechLocale: string | null
 }) {
   const router = useRouter()
   const { progress } = useCourseProgress()
   const [query, setQuery] = React.useState("")
   const [sort, setSort] = React.useState<Sort | null>(null)
-  const [editing, setEditing] = React.useState<Word | null>(null)
+  const [editing, setEditing] = React.useState<Card | null>(null)
   const [deleting, setDeleting] = React.useState<string | null>(null)
 
   const filtered = React.useMemo(() => {
     const needle = query.trim().toLowerCase()
     if (!needle) return words
     return words.filter((word) =>
-      [word.korean, word.romanization, word.translation, word.note ?? ""]
+      [word.front, word.phonetic, word.back, word.note ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(needle)
@@ -116,7 +119,7 @@ export function WordTable({
     })
   }
 
-  async function remove(word: Word) {
+  async function remove(word: Card) {
     setDeleting(word.id)
     try {
       await api(`/api/courses/${courseId}/words/${word.id}`, {
@@ -189,19 +192,19 @@ export function WordTable({
                     `border-l-2 ${STANDING[standingKey(progress.stats[word.id])].edge}`
                 )}
               >
-                <SpeakButton text={word.korean} size="icon" />
+                <SpeakButton
+                  text={word.front}
+                  speechLocale={speechLocale}
+                  size="icon"
+                />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span lang="ko" className="font-medium break-words">
-                    {word.korean}
-                  </span>
-                  {word.romanization && (
+                  <span className="font-medium break-words">{word.front}</span>
+                  {word.phonetic && (
                     <span className="text-sm break-words text-muted-foreground">
-                      {word.romanization}
+                      {word.phonetic}
                     </span>
                   )}
-                  <span className="text-sm break-words">
-                    {word.translation}
-                  </span>
+                  <span className="text-sm break-words">{word.back}</span>
                   {word.note && (
                     <span className="mt-1 text-xs break-words text-muted-foreground">
                       {word.note}
@@ -219,7 +222,7 @@ export function WordTable({
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label={`Modifier ${word.korean}`}
+                      aria-label={`Modifier ${word.front}`}
                       onClick={() => setEditing(word)}
                     >
                       <PencilIcon />
@@ -227,7 +230,7 @@ export function WordTable({
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label={`Supprimer ${word.korean}`}
+                      aria-label={`Supprimer ${word.front}`}
                       disabled={deleting === word.id}
                       onClick={() => remove(word)}
                     >
@@ -247,22 +250,22 @@ export function WordTable({
                 <TableRow>
                   <TableHead className="w-12" />
                   <SortHead
-                    label="Coréen"
-                    sortKey="korean"
+                    label="Recto"
+                    sortKey="front"
                     sort={sort}
                     onSort={toggleSort}
                     className="w-[18%]"
                   />
                   <SortHead
-                    label="Prononciation"
-                    sortKey="romanization"
+                    label="Indice phonétique"
+                    sortKey="phonetic"
                     sort={sort}
                     onSort={toggleSort}
                     className="w-[18%]"
                   />
                   <SortHead
-                    label="Traduction"
-                    sortKey="translation"
+                    label="Verso"
+                    sortKey="back"
                     sort={sort}
                     onSort={toggleSort}
                   />
@@ -290,16 +293,19 @@ export function WordTable({
                           `border-l-2 ${STANDING[standingKey(progress.stats[word.id])].edge}`
                       )}
                     >
-                      <SpeakButton text={word.korean} />
+                      <SpeakButton
+                        text={word.front}
+                        speechLocale={speechLocale}
+                      />
                     </TableCell>
-                    <TableCell lang="ko" className="font-medium break-words">
-                      {word.korean}
+                    <TableCell className="font-medium break-words">
+                      {word.front}
                     </TableCell>
                     <TableCell className="break-words text-muted-foreground">
-                      {word.romanization}
+                      {word.phonetic}
                     </TableCell>
                     <TableCell className="break-words">
-                      {word.translation}
+                      {word.back}
                       {word.note && (
                         <span className="mt-1 block text-xs text-muted-foreground">
                           {word.note}
@@ -317,7 +323,7 @@ export function WordTable({
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label={`Modifier ${word.korean}`}
+                            aria-label={`Modifier ${word.front}`}
                             onClick={() => setEditing(word)}
                           >
                             <PencilIcon />
@@ -325,7 +331,7 @@ export function WordTable({
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label={`Supprimer ${word.korean}`}
+                            aria-label={`Supprimer ${word.front}`}
                             disabled={deleting === word.id}
                             onClick={() => remove(word)}
                           >
@@ -354,21 +360,20 @@ export function WordTable({
   )
 }
 
-/** Korean sorts by its own alphabet, the rest by French rules. */
 function compare(
   key: SortKey,
-  a: Word,
-  b: Word,
+  a: Card,
+  b: Card,
   statA: WordStat | undefined,
   statB: WordStat | undefined
 ): number {
   switch (key) {
-    case "korean":
-      return a.korean.localeCompare(b.korean, "ko")
-    case "romanization":
-      return a.romanization.localeCompare(b.romanization, "fr")
-    case "translation":
-      return a.translation.localeCompare(b.translation, "fr")
+    case "front":
+      return a.front.localeCompare(b.front)
+    case "phonetic":
+      return a.phonetic.localeCompare(b.phonetic)
+    case "back":
+      return a.back.localeCompare(b.back)
     case "standing": {
       const rank =
         STANDING_RANK[standingKey(statA)] - STANDING_RANK[standingKey(statB)]

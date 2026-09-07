@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
 import { api } from "@/lib/api"
-import type { Course, Word } from "@/lib/types"
+import type { Card, Course } from "@/lib/types"
 
 const JSON_PLACEHOLDER = `[
   { "mot": "안녕하세요", "prononciation": "annyeonghaseyo", "traduction": "bonjour" },
@@ -41,13 +41,21 @@ const TEXT_PLACEHOLDER = `안녕하세요 - annyeonghaseyo - bonjour
 사랑 (sarang) : amour`
 
 type Preview = {
-  courses: { title?: string; date?: string; words: Word[] }[]
+  courses: { title?: string; date?: string; words: Card[] }[]
   skipped: string[]
   /** Set when the parse call itself failed (invalid JSON, server error…). */
   error?: string
 }
 
-export function ImportDialog({ children }: { children: React.ReactNode }) {
+export function ImportDialog({
+  spaceId,
+  folderId = null,
+  children,
+}: {
+  spaceId: string
+  folderId?: string | null
+  children: React.ReactNode
+}) {
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [mode, setMode] = React.useState("json")
@@ -139,6 +147,8 @@ export function ImportDialog({ children }: { children: React.ReactNode }) {
           ...payload,
           title: title || undefined,
           date: date || undefined,
+          spaceId,
+          folderId,
         }),
       })
       toast.add({
@@ -146,7 +156,7 @@ export function ImportDialog({ children }: { children: React.ReactNode }) {
           courses.length > 1
             ? `${courses.length} cours importés`
             : "Cours importé",
-        description: `${courses.reduce((total, course) => total + course.words.length, 0)} mots ajoutés.`,
+        description: `${courses.reduce((total, course) => total + course.cards.length, 0)} mots ajoutés.`,
         type: "success",
       })
       handleOpenChange(false)
@@ -285,12 +295,12 @@ export function ImportDialog({ children }: { children: React.ReactNode }) {
                             className="border-b last:border-b-0"
                           >
                             <td className="px-3 py-1.5 font-medium">
-                              {word.korean}
+                              {word.front}
                             </td>
                             <td className="px-3 py-1.5 text-muted-foreground">
-                              {word.romanization}
+                              {word.phonetic}
                             </td>
-                            <td className="px-3 py-1.5">{word.translation}</td>
+                            <td className="px-3 py-1.5">{word.back}</td>
                           </tr>
                         ))}
                     </tbody>

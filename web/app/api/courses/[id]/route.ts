@@ -24,12 +24,21 @@ export async function PATCH(request: Request, { params }: Params) {
   const body = (await request.json().catch(() => ({}))) as {
     title?: string
     date?: string
+    spaceId?: string
+    folderId?: string | null
+    speechLocale?: string | null
   }
 
   const course = await updateCourse(id, (current) => ({
     ...current,
     title: body.title?.trim() || current.title,
     date: body.date ? normalizeDate(body.date) : current.date,
+    spaceId: body.spaceId?.trim() || current.spaceId,
+    folderId: body.folderId !== undefined ? body.folderId : current.folderId,
+    speechLocale:
+      body.speechLocale !== undefined
+        ? body.speechLocale
+        : current.speechLocale,
   }))
   if (!course)
     return NextResponse.json({ error: "Cours introuvable." }, { status: 404 })

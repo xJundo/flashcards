@@ -5,9 +5,9 @@
  * `/api/courses`), donc le script et l'interface web se comportent à l'identique.
  *
  * Usage :
- *   node scripts/import-notes.mjs notes.txt
- *   node scripts/import-notes.mjs notes.json --url https://coreen.mondomaine.fr
- *   node scripts/import-notes.mjs notes.txt --title "Leçon 3" --date 2026-03-04
+ *   node scripts/import-notes.mjs notes.txt --space coreen
+ *   node scripts/import-notes.mjs notes.json --space coreen --url https://mondomaine.fr
+ *   node scripts/import-notes.mjs notes.txt --space coreen --title "Leçon 3" --date 2026-03-04
  *   node scripts/import-notes.mjs notes.txt --dry-run -o cours.json
  */
 
@@ -18,6 +18,8 @@ import process from "node:process"
 const USAGE = `Usage: node scripts/import-notes.mjs <fichier> [options]
 
 Options:
+  --space <slug|id> Espace où ranger le cours (requis, sauf --dry-run)
+  --folder <id>     Dossier où ranger le cours, dans l'espace (optionnel)
   --url <url>       URL de l'app (défaut: $FLASHCARDS_URL ou http://localhost:3000)
   --title <titre>   Force le titre du cours
   --date <date>     Force la date du cours (YYYY-MM-DD)
@@ -51,6 +53,12 @@ function parseArgs(argv) {
         break
       case "--date":
         options.date = argv[++index]
+        break
+      case "--space":
+        options.space = argv[++index]
+        break
+      case "--folder":
+        options.folder = argv[++index]
         break
       case "-o":
       case "--out":
@@ -103,6 +111,10 @@ async function main() {
     process.stdout.write(USAGE)
     process.exit(options.help ? 0 : 1)
   }
+  if (!options.dryRun && !options.space) {
+    console.error("✖ --space est requis (sauf en --dry-run).")
+    process.exit(1)
+  }
 
   const contents = await readFile(path.resolve(file), "utf8")
   // Un `.json` est envoyé tel quel ; tout le reste passe par le parseur de notes.
@@ -130,10 +142,12 @@ async function main() {
     ...payload,
     ...(options.title ? { title: options.title } : {}),
     ...(options.date ? { date: options.date } : {}),
+    spaceId: options.space,
+    ...(options.folder ? { folderId: options.folder } : {}),
   })
 
   for (const course of result.courses) {
-    console.log(`✔ « ${course.title} » (${course.date}) — ${course.words.length} mots`)
+    console.log(`✔ « ${course.title} » (${course.date}) — ${course.cards.length} mots`)
     console.log(`  ${base}/courses/${course.id}`)
   }
   if (result.skipped?.length) {

@@ -1,8 +1,11 @@
-# Flashcards coréen
+# Flashcards
 
-Application web pour réviser le vocabulaire des cours de coréen : import des notes
-Google Docs, page d'accueil listant les cours par date, flashcards avec mode
-apprentissage et prononciation audio, et la liste brute des mots sous les cartes.
+Application web de flashcards générique : une page d'accueil liste des **espaces**
+(une langue, une matière — n'importe quel sujet), chacun organisé en **dossiers**
+imbriqués à volonté contenant des **cours**. Un cours importe des notes Google Docs,
+propose des flashcards recto/verso avec mode apprentissage et prononciation audio
+(quand le cours a une langue associée), et affiche la liste brute des mots sous les
+cartes.
 
 - **Stack** : Next.js 16 (App Router) + shadcn/ui (Base UI) + Tailwind v4
 - **Base de données** : PostgreSQL, accédée via Drizzle
@@ -95,7 +98,7 @@ Trois chemins, tous équivalents — ils passent par le même parseur.
 
 ### 1. Depuis l'interface (le plus simple)
 
-Bouton **Importer** sur la page d'accueil. Deux onglets :
+Bouton **Importer** sur la page d'un espace ou d'un dossier. Deux onglets :
 
 - **Texte brut** : colle directement ce que tu as copié depuis Google Docs.
 - **JSON** : colle un JSON structuré (voir le format plus bas).
@@ -106,16 +109,17 @@ reconnues, avant de valider.
 ### 2. Depuis la ligne de commande
 
 ```bash
-# L'app doit tourner (local ou en prod)
-node scripts/import-notes.mjs examples/notes-brutes.txt
-node scripts/import-notes.mjs examples/cours.json --url https://coreen.mondomaine.fr
+# L'app doit tourner (local ou en prod) ; --space prend le slug ou l'id de l'espace
+node scripts/import-notes.mjs examples/notes-brutes.txt --space coreen
+node scripts/import-notes.mjs examples/cours.json --space coreen --url https://mondomaine.fr
 
-# Voir le JSON produit sans rien créer
+# Voir le JSON produit sans rien créer (pas besoin de --space)
 node scripts/import-notes.mjs mes-notes.txt --dry-run
 node scripts/import-notes.mjs mes-notes.txt -o cours.json
 
-# Forcer le titre / la date
-node scripts/import-notes.mjs mes-notes.txt --title "Leçon 3" --date 2026-03-04
+# Forcer le titre / la date, ou ranger dans un dossier de l'espace
+node scripts/import-notes.mjs mes-notes.txt --space coreen --title "Leçon 3" --date 2026-03-04
+node scripts/import-notes.mjs mes-notes.txt --space coreen --folder <id-du-dossier>
 ```
 
 L'URL par défaut est `http://localhost:3000`, surchargeable via `--url` ou la
@@ -133,11 +137,11 @@ FLASHCARDS_COOKIE='better-auth.session_token=…' node scripts/import-notes.mjs 
 
 Si tes notes sont trop irrégulières pour le parseur, colle-les dans ChatGPT avec :
 
-> Transforme ces notes de cours de coréen en JSON. Réponds **uniquement** avec le
+> Transforme ces notes de cours en JSON. Réponds **uniquement** avec le
 > JSON, sans texte autour, au format :
-> `{ "title": "...", "date": "AAAA-MM-JJ", "words": [{ "mot": "...", "prononciation": "...", "traduction": "...", "note_additionnelle": "..." }] }`
-> Le champ `prononciation` est la romanisation du mot coréen.
-> `note_additionnelle` est facultatif : ne le mets que s'il y a quelque chose à
+> `{ "title": "...", "date": "AAAA-MM-JJ", "words": [{ "front": "...", "phonetic": "...", "back": "...", "note": "..." }] }`
+> Le champ `phonetic` est un indice de prononciation (romanisation, etc.), facultatif.
+> `note` est facultatif : ne le mets que s'il y a quelque chose à
 > préciser (deux mots qui se prononcent pareil, une règle particulière). Garde
 > l'ordre des mots de la note. Si une date apparaît dans les notes, utilise-la.
 
@@ -167,12 +171,12 @@ romanisation est devinée quand elle en a la forme, sinon c'est une traduction.
   "title": "Leçon 1 : les salutations",
   "date": "2026-02-11",
   "words": [
-    { "mot": "안녕하세요", "prononciation": "annyeonghaseyo", "traduction": "bonjour" },
+    { "front": "안녕하세요", "phonetic": "annyeonghaseyo", "back": "bonjour" },
     {
-      "mot": "말",
-      "prononciation": "mal",
-      "traduction": "cheval",
-      "note_additionnelle": "말 (mal) veut aussi dire « parole » — voyelle brève ici"
+      "front": "말",
+      "phonetic": "mal",
+      "back": "cheval",
+      "note": "말 (mal) veut aussi dire « parole » — voyelle brève ici"
     }
   ]
 }
@@ -180,8 +184,9 @@ romanisation est devinée quand elle en a la forme, sinon c'est une traduction.
 
 Les noms de champs sont tolérants — la casse, les accents et les séparateurs
 sont ignorés (`note_additionnelle`, `Note additionnelle` et `note-additionnelle`
-sont la même colonne) : `mot`/`korean`/`word`/`hangul`,
-`prononciation`/`romanization`/`romaja`, `traduction`/`translation`/`meaning`,
+sont la même colonne) : `front`/`recto`/`mot`/`korean`/`word`/`hangul`,
+`phonetic`/`romanization`/`prononciation`/`romaja`,
+`back`/`verso`/`traduction`/`translation`/`meaning`,
 plus une note facultative (`note`/`note_additionnelle`/`remarque`/`exemple`/
 `explication`/`règle`/`astuce`), affichée sous le mot sur la carte. Si un mot
 porte plusieurs de ces champs à la fois, ils sont conservés et joints par
@@ -197,13 +202,13 @@ Sur la page d'un cours, deux sections :
 
 Options de la session :
 
-- **Coréen / Français / Aléatoire / Écoute** : quelle face est affichée en premier.
+- **Recto / Verso / Aléatoire / Écoute** : quelle face est affichée en premier.
   « Aléatoire » tire le sens carte par carte. « Écoute » n'affiche pas le mot :
   la carte joue la prononciation, à toi de l'écrire avant de retourner. Le
-  bouton **Prononciation** décide si la romanisation s'affiche en indice — coupe-le
+  bouton **Prononciation** décide si l'indice phonétique s'affiche — coupe-le
   pour une écoute pure.
 - **Mélanger / Ordre du cours** : ordre de passage des cartes.
-- **Audio auto** : joue la prononciation dès que la face coréenne apparaît.
+- **Audio auto** : joue la prononciation dès que le recto apparaît.
 - Chaque carte est marquée **Acquis** ou **À revoir**. En fin de série, un récapitulatif
   permet de **rejouer uniquement les échecs**.
 
@@ -249,15 +254,24 @@ ailleurs ou versionné.
 
 | Méthode  | Route                                | Rôle                                     |
 | -------- | ------------------------------------ | ---------------------------------------- |
+| `GET`    | `/api/spaces`                        | Liste des espaces                        |
+| `POST`   | `/api/spaces`                        | Créer un espace (`{ title }`)            |
+| `GET`    | `/api/spaces/:id`                    | Un espace (id ou slug)                   |
+| `PATCH`  | `/api/spaces/:id`                    | Renommer                                 |
+| `DELETE` | `/api/spaces/:id`                    | Supprimer (doit être vide)               |
+| `POST`   | `/api/folders`                       | Créer un dossier (`{ spaceId, parentId?, title }`) |
+| `GET`    | `/api/folders/:id`                   | Un dossier                               |
+| `PATCH`  | `/api/folders/:id`                   | Renommer / déplacer (`{ title?, parentId? }`) |
+| `DELETE` | `/api/folders/:id`                   | Supprimer (doit être vide)               |
 | `GET`    | `/api/courses`                       | Liste des cours                          |
-| `POST`   | `/api/courses`                       | Créer / importer (`json`, `text`, ou ni l'un ni l'autre pour un cours vide) |
-| `GET`    | `/api/courses/:id`                   | Un cours avec ses mots                   |
-| `PATCH`  | `/api/courses/:id`                   | Renommer / redater                       |
+| `POST`   | `/api/courses`                       | Créer / importer (`spaceId` requis, `folderId?`, `json`, `text`, ou ni l'un ni l'autre pour un cours vide) |
+| `GET`    | `/api/courses/:id`                   | Un cours avec ses cartes                 |
+| `PATCH`  | `/api/courses/:id`                   | Renommer / redater / déplacer (`spaceId?`, `folderId?`) |
 | `DELETE` | `/api/courses/:id`                   | Supprimer                                |
 | `GET`    | `/api/courses/:id/export`            | Télécharger le JSON                      |
-| `POST`   | `/api/courses/:id/words`             | Ajouter un mot (ou `{ "words": [...] }`) |
-| `PATCH`  | `/api/courses/:id/words/:wordId`     | Modifier un mot                          |
-| `DELETE` | `/api/courses/:id/words/:wordId`     | Supprimer un mot                         |
+| `POST`   | `/api/courses/:id/words`             | Ajouter une carte (ou `{ "words": [...] }`) |
+| `PATCH`  | `/api/courses/:id/words/:wordId`     | Modifier une carte                       |
+| `DELETE` | `/api/courses/:id/words/:wordId`     | Supprimer une carte                      |
 | `POST`   | `/api/parse`                         | Aperçu d'un import, sans écriture        |
 | `GET`    | `/api/tts?text=…`                    | Audio coréen (repli serveur)             |
 | `GET`    | `/api/courses/:id/editors`           | Qui peut écrire + comptes existants (auteur seul) |
@@ -267,8 +281,10 @@ ailleurs ou versionné.
 | `POST`   | `/api/courses/:id/progress`          | Enregistrer une série, ou marquer un mot acquis |
 | `*`      | `/api/auth/*`                        | Inscription, connexion, session (better-auth) |
 
-Les routes de lecture sont ouvertes ; toute écriture sur un cours exige d'en être
-l'auteur ou d'y avoir été invité (`401` sans compte, `403` sans les droits).
+Les routes de lecture sont ouvertes ; créer/renommer/déplacer/supprimer un espace ou
+un dossier ne demande qu'un compte (comme créer un cours) ; toute écriture sur un
+cours exige d'en être l'auteur ou d'y avoir été invité (`401` sans compte, `403` sans
+les droits).
 
 ## Structure
 
@@ -281,7 +297,7 @@ web/                        # l'application Next.js
   components/               # UI (shadcn/ui) et composants métier
   drizzle/                  # migrations SQL, jouées au démarrage
   instrumentation.ts        # applique les migrations au boot du serveur
-  lib/db/schema.ts          # le schéma : comptes, cours, mots, accès, progression
+  lib/db/schema.ts          # le schéma : comptes, espaces, dossiers, cours, cartes, accès, progression
   lib/store.ts              # requêtes des cours + règles de droits
   lib/progress-store.ts     # progression par compte
   lib/auth.ts               # configuration better-auth

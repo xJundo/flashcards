@@ -55,13 +55,7 @@ type Body = {
   clearRuns?: boolean
 }
 
-const FRONT_SIDES: RunFront[] = [
-  "korean",
-  "translation",
-  "random",
-  "audio",
-  "mixed",
-]
+const FRONT_SIDES: RunFront[] = ["front", "back", "random", "audio", "mixed"]
 
 export async function POST(request: Request, { params }: Params) {
   const { id } = await params
@@ -89,7 +83,7 @@ export async function POST(request: Request, { params }: Params) {
             ? Math.trunc(body.run.size)
             : failed.length + known.length,
         completed: body.run.completed !== false,
-        frontSide: frontSide ?? "korean",
+        frontSide: frontSide ?? "front",
       })
     )
   }

@@ -28,4 +28,7 @@
 22. avoir une info comme quuoi qu'on a réussi le cours (100% des mots connus), sur la page d'accueil et sur la page du cours, plus la liste publique de ceux qui l'ont réussi. [x]
 23. Avoir une section markdown / pdf qui explique le cours.
 
-test
+# Other
+1. Faire de cette appli une appli générique de flashcards, pas forcément la langue coréenne. (En gros, une page d'accueil avec un dossier / space de langues, et dans chaque langue, des cours de flashcards (qui peuvent être imbriqués dans des dossiers etc), et une autre page ou c'est juste un truc sur la face recto, un truc sur la face verso, la possibilité d'ajouter une image en tant que recto ou verso, et une note supplémentaire comme pour les langues.). [x]
+2. rajouter des images sur les dossiers / spaces en mode bannière, et changer les couleurs des dossiers / spaces pour que ce soit plus joli. [ ]
+3. à l'export en json, il faut aussi exporter l'image et qu'elle soit réimportable avec le json mode [ ]

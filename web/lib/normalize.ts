@@ -1,11 +1,14 @@
-import type { Course, Word } from "@/lib/types"
+import type { Card, Course } from "@/lib/types"
 
 /**
  * Field aliases accepted on import. Notes exported from Google Docs (or run
  * through ChatGPT) rarely use the exact same keys twice, so we accept the
- * French, English and romanised spellings of each column.
+ * French, English and romanised spellings of each column — plus the generic
+ * recto/verso vocabulary for imports that aren't Korean at all.
  */
-const KOREAN_KEYS = [
+const FRONT_KEYS = [
+  "front",
+  "recto",
   "korean",
   "ko",
   "mot",
@@ -14,17 +17,20 @@ const KOREAN_KEYS = [
   "coreen",
   "coréen",
 ]
-const ROMANIZATION_KEYS = [
+const PHONETIC_KEYS = [
+  "phonetic",
+  "phonetique",
+  "phonétique",
   "romanization",
   "romanisation",
   "prononciation",
   "pronunciation",
   "romaja",
   "reading",
-  "phonetique",
-  "phonétique",
 ]
-const TRANSLATION_KEYS = [
+const BACK_KEYS = [
+  "back",
+  "verso",
   "translation",
   "traduction",
   "fr",
@@ -78,7 +84,7 @@ function normalizeKey(key: string): string {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[\s_-]+/g, "")
 }
 
@@ -116,31 +122,29 @@ function pickAll(source: Record<string, unknown>, keys: string[]): string[] {
   return values
 }
 
-/** Turns one loosely-typed entry into a `Word`, or `null` if it carries nothing. */
-export function normalizeWord(input: unknown): Word | null {
+/** Turns one loosely-typed entry into a `Card`, or `null` if it carries nothing. */
+export function normalizeWord(input: unknown): Card | null {
   if (typeof input === "string") {
     const value = input.trim()
-    return value
-      ? { id: makeId(), korean: value, romanization: "", translation: "" }
-      : null
+    return value ? { id: makeId(), front: value, phonetic: "", back: "" } : null
   }
   if (!input || typeof input !== "object") return null
 
   const source = input as Record<string, unknown>
-  const korean = pick(source, KOREAN_KEYS)
-  const romanization = pick(source, ROMANIZATION_KEYS)
-  const translation = pick(source, TRANSLATION_KEYS)
+  const front = pick(source, FRONT_KEYS)
+  const phonetic = pick(source, PHONETIC_KEYS)
+  const back = pick(source, BACK_KEYS)
   const note = pickAll(source, NOTE_KEYS).join(" · ")
-  if (!korean && !translation) return null
+  if (!front && !back) return null
 
   // An imported file may carry ids from elsewhere; only a real UUID is kept.
   const id = isId(source.id) ? source.id : makeId()
-  return { id, korean, romanization, translation, ...(note ? { note } : {}) }
+  return { id, front, phonetic, back, ...(note ? { note } : {}) }
 }
 
-export function normalizeWords(input: unknown): Word[] {
+export function normalizeWords(input: unknown): Card[] {
   const list = Array.isArray(input) ? input : [input]
-  return list.map(normalizeWord).filter((word): word is Word => word !== null)
+  return list.map(normalizeWord).filter((word): word is Card => word !== null)
 }
 
 /** `YYYY-MM-DD` for today, in local time. */
@@ -166,7 +170,7 @@ function normalizeDate(input: unknown): string {
 export type ParsedImport = {
   title?: string
   date?: string
-  words: Word[]
+  words: Card[]
 }
 
 /**
@@ -181,6 +185,7 @@ export function normalizeImport(input: unknown): ParsedImport {
   const source = input as Record<string, unknown>
   const wordsField =
     source.words ??
+    source.cards ??
     source.mots ??
     source.vocabulary ??
     source.vocabulaire ??
@@ -253,7 +258,11 @@ function isCourseLike(input: unknown): boolean {
   if (!input || typeof input !== "object" || Array.isArray(input)) return false
   const source = input as Record<string, unknown>
   return Boolean(
-    source.words ?? source.mots ?? source.vocabulary ?? source.vocabulaire
+    source.words ??
+    source.cards ??
+    source.mots ??
+    source.vocabulary ??
+    source.vocabulaire
   )
 }
 
@@ -261,7 +270,7 @@ function isCourseLike(input: unknown): boolean {
 export function toCourse(
   parsed: ParsedImport,
   fallbackTitle: string
-): Omit<Course, "owner"> {
+): Omit<Course, "owner" | "spaceId" | "folderId" | "speechLocale"> {
   const now = new Date().toISOString()
   return {
     id: makeId(),
@@ -269,7 +278,7 @@ export function toCourse(
     date: normalizeDate(parsed.date),
     createdAt: now,
     updatedAt: now,
-    words: parsed.words,
+    cards: parsed.words,
     hasSheet: false,
   }
 }

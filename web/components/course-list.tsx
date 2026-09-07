@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import {
   BookOpenIcon,
   DownloadIcon,
+  FolderInputIcon,
   MoreVerticalIcon,
   PencilIcon,
   PlusIcon,
@@ -20,6 +21,7 @@ import { StandingBar } from "@/components/course-meter"
 import { CourseSheetDrawer } from "@/components/course-sheet"
 import { FavoriteButton } from "@/components/favorite-button"
 import { ImportDialog } from "@/components/import-dialog"
+import { MoveDialog } from "@/components/move-dialog"
 import { STANDING, scoreKey } from "@/components/word-standing"
 import {
   AlertDialog,
@@ -65,9 +67,14 @@ import { cn } from "@/lib/utils"
 export function CourseList({
   courses,
   signedIn,
+  spaceId,
+  folderId = null,
 }: {
   courses: CourseSummary[]
   signedIn: boolean
+  /** Where a new or imported lesson gets filed. */
+  spaceId: string
+  folderId?: string | null
 }) {
   const router = useRouter()
   const [pendingDelete, setPendingDelete] =
@@ -76,6 +83,7 @@ export function CourseList({
   // through the fade-out instead of flashing the "new lesson" wording.
   const [editing, setEditing] = React.useState<CourseSummary | null>(null)
   const [editOpen, setEditOpen] = React.useState(false)
+  const [moving, setMoving] = React.useState<CourseSummary | null>(null)
 
   // Bookmarked lessons are lifted out rather than copied, so no card appears
   // twice — which is also why the second heading is not "tous les cours".
@@ -101,23 +109,20 @@ export function CourseList({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Les cours</h1>
-          <p className="text-sm text-muted-foreground">
-            {courses.length === 0
-              ? "Aucun cours pour l'instant."
-              : `${courses.length} cours · ${courses.reduce((total, course) => total + course.wordCount, 0)} mots`}
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {courses.length === 0
+            ? "Aucun cours pour l'instant."
+            : `${courses.length} cours · ${courses.reduce((total, course) => total + course.wordCount, 0)} mots`}
+        </p>
         {signedIn ? (
           <div className="flex gap-2">
-            <ImportDialog>
+            <ImportDialog spaceId={spaceId} folderId={folderId}>
               <Button variant="outline">
                 <UploadIcon data-icon="inline-start" />
                 Importer
               </Button>
             </ImportDialog>
-            <CourseFormDialog>
+            <CourseFormDialog spaceId={spaceId} folderId={folderId}>
               <Button>
                 <PlusIcon data-icon="inline-start" />
                 Nouveau cours
@@ -140,13 +145,13 @@ export function CourseList({
             <EmptyTitle>Aucun cours publié</EmptyTitle>
             <EmptyDescription>
               {signedIn
-                ? "Colle le JSON de tes notes (mot / prononciation / traduction), ou directement le texte brut copié depuis Google Docs."
+                ? "Colle le JSON de tes notes (recto / indice phonétique / verso), ou directement le texte brut copié depuis Google Docs."
                 : "Crée un compte pour publier tes propres cours."}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             {signedIn ? (
-              <ImportDialog>
+              <ImportDialog spaceId={spaceId} folderId={folderId}>
                 <Button>
                   <UploadIcon data-icon="inline-start" />
                   Importer des notes
@@ -175,6 +180,7 @@ export function CourseList({
                   setEditOpen(true)
                 }}
                 onDelete={setPendingDelete}
+                onMove={setMoving}
               />
             </section>
           )}
@@ -198,6 +204,7 @@ export function CourseList({
                   setEditOpen(true)
                 }}
                 onDelete={setPendingDelete}
+                onMove={setMoving}
               />
             )}
           </section>
@@ -212,6 +219,24 @@ export function CourseList({
         open={editOpen}
         onOpenChange={setEditOpen}
       />
+
+      {moving && (
+        <MoveDialog
+          open
+          onOpenChange={(next) => !next && setMoving(null)}
+          title={`Déplacer « ${moving.title} »`}
+          currentSpaceId={moving.spaceId}
+          currentFolderId={moving.folderId}
+          onConfirm={async (target) => {
+            await api(`/api/courses/${moving.id}`, {
+              method: "PATCH",
+              body: JSON.stringify(target),
+            })
+            toast.add({ title: "Cours déplacé", type: "success" })
+            router.refresh()
+          }}
+        />
+      )}
 
       <AlertDialog
         open={pendingDelete !== null}
@@ -243,6 +268,7 @@ export function CourseList({
 type CardActions = {
   onEdit: (course: CourseSummary) => void
   onDelete: (course: CourseSummary) => void
+  onMove: (course: CourseSummary) => void
 }
 
 function CourseGrid({
@@ -250,6 +276,7 @@ function CourseGrid({
   signedIn,
   onEdit,
   onDelete,
+  onMove,
 }: { courses: CourseSummary[]; signedIn: boolean } & CardActions) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -260,6 +287,7 @@ function CourseGrid({
           signedIn={signedIn}
           onEdit={onEdit}
           onDelete={onDelete}
+          onMove={onMove}
         />
       ))}
     </div>
@@ -275,6 +303,7 @@ function CourseCard({
   signedIn,
   onEdit,
   onDelete,
+  onMove,
 }: { course: CourseSummary; signedIn: boolean } & CardActions) {
   const { standing, wordCount } = course
   const percent = standing ? percentOf(standing.known, wordCount) : 0
@@ -332,6 +361,12 @@ function CourseCard({
                   <DropdownMenuItem onClick={() => onEdit(course)}>
                     <PencilIcon />
                     Renommer / redater
+                  </DropdownMenuItem>
+                )}
+                {course.editable && (
+                  <DropdownMenuItem onClick={() => onMove(course)}>
+                    <FolderInputIcon />
+                    Déplacer
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem

@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { useKoreanSpeech } from "@/hooks/use-korean-speech"
+import { useSpeech } from "@/hooks/use-speech"
 import { shuffle } from "@/lib/api"
 import { useSettings, type Settings } from "@/lib/settings"
 import { KNOWN_STREAK } from "@/lib/types"
@@ -30,12 +30,12 @@ import type {
   RunFront,
   SeriesMode,
   Verdict,
-  Word,
+  Card,
   WordStat,
 } from "@/lib/types"
 
 /** A word plus the side decided for this run (resolved once, so flipping is stable). */
-type DeckCard = { word: Word; front: Side }
+type DeckCard = { word: Card; front: Side }
 
 /** One pass through a deck. Kept as a single value so a restart is atomic. */
 type Run = {
@@ -69,11 +69,11 @@ const SIZES = [10, 20, 50]
 /** `random` is decided card by card, so each draw resolves it on its own. */
 function faceFor(frontSide: FrontSide): Side {
   if (frontSide !== "random") return frontSide
-  return Math.random() < 0.5 ? "korean" : "translation"
+  return Math.random() < 0.5 ? "front" : "back"
 }
 
 function buildDeck(
-  words: Word[],
+  words: Card[],
   frontSide: FrontSide,
   shuffled: boolean,
   size: number | null
@@ -97,6 +97,7 @@ export function SeriesDialog({
   hasSheet,
   words,
   stats,
+  speechLocale,
   onOpenChange,
   onRecord,
 }: {
@@ -105,13 +106,15 @@ export function SeriesDialog({
   courseId: string
   /** Whether the lesson has a revision sheet to open from the header. */
   hasSheet: boolean
-  words: Word[]
+  words: Card[]
   /** Where each word stands, to draw a deck from one standing. */
   stats: Record<string, WordStat>
+  /** BCP-47 locale of the course's spoken language, or `null` for none. */
+  speechLocale: string | null
   onOpenChange: (open: boolean) => void
   onRecord: (report: RunReport) => void
 }) {
-  const { speak } = useKoreanSpeech()
+  const { speak } = useSpeech(speechLocale)
   const [settings, update] = useSettings()
   /** `null` until the learner starts: the launch screen is the first phase. */
   const [run, setRun] = React.useState<Run | null>(null)
@@ -140,18 +143,23 @@ export function SeriesDialog({
   const pool = pools[source]
 
   const start = React.useCallback(
-    (from: Word[], next: Settings, size: number | null) => {
+    (from: Card[], next: Settings, size: number | null) => {
       recorded.current = null
+      // A course with no spoken language can't honour a leftover "Écoute"
+      // preference from a different course — read out loud, it would be dead
+      // silence.
+      const frontSide =
+        !speechLocale && next.frontSide === "audio" ? "front" : next.frontSide
       setRun({
-        deck: buildDeck(from, next.frontSide, next.shuffled, size),
+        deck: buildDeck(from, frontSide, next.shuffled, size),
         index: 0,
         flipped: false,
         verdicts: {},
-        frontSide: next.frontSide,
+        frontSide,
         mixed: false,
       })
     },
-    []
+    [speechLocale]
   )
 
   /**
@@ -263,10 +271,10 @@ export function SeriesDialog({
   const { autoplay, romanization } = settings
   const flipped = run?.flipped ?? false
   React.useEffect(() => {
-    if (!current?.word.korean) return
-    const koreanVisible = current.front === "korean" ? !flipped : flipped
+    if (!current?.word.front) return
+    const frontVisible = current.front === "front" ? !flipped : flipped
     const isPrompt = current.front === "audio" && !flipped
-    if (isPrompt || (autoplay && koreanVisible)) speak(current.word.korean)
+    if (isPrompt || (autoplay && frontVisible)) speak(current.word.front)
   }, [autoplay, current, flipped, speak])
 
   React.useEffect(() => {
@@ -313,7 +321,7 @@ export function SeriesDialog({
         previous()
       } else if (event.key.toLowerCase() === "s") {
         event.preventDefault()
-        speak(card.word.korean)
+        speak(card.word.front)
       }
     }
     // Capture phase: the dialog popup stops keydown from reaching `window`,
@@ -402,6 +410,7 @@ export function SeriesDialog({
             settings={settings}
             source={source}
             pools={pools}
+            speechLocale={speechLocale}
             onChange={update}
             onStart={(size) => start(pool, settings, size)}
           />
@@ -421,10 +430,12 @@ export function SeriesDialog({
                   <>
                     <Flashcard
                       ref={cardRef}
+                      courseId={courseId}
                       word={current.word}
                       front={current.front}
                       flipped={run.flipped}
                       romanization={romanization}
+                      speechLocale={speechLocale}
                       onFlip={flip}
                       className="min-h-56 flex-1"
                     />
@@ -438,15 +449,17 @@ export function SeriesDialog({
                       >
                         <XIcon data-icon="inline-start" />À revoir
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="h-11 w-11 sm:h-9 sm:w-auto"
-                        aria-label="Écouter en coréen"
-                        onClick={() => speak(current.word.korean)}
-                      >
-                        <Volume2Icon />
-                      </Button>
+                      {speechLocale && (
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          className="h-11 w-11 sm:h-9 sm:w-auto"
+                          aria-label="Écouter la prononciation"
+                          onClick={() => speak(current.word.front)}
+                        >
+                          <Volume2Icon />
+                        </Button>
+                      )}
                       <Button
                         size="lg"
                         className="h-11 flex-1 sm:h-9 sm:flex-none"
@@ -461,6 +474,7 @@ export function SeriesDialog({
                       <FrontSidePicker
                         value={run.frontSide}
                         onChange={changeFront}
+                        showAudio={Boolean(speechLocale)}
                       />
                       <Toggle
                         id="series-romanization"
@@ -470,19 +484,22 @@ export function SeriesDialog({
                           update({ romanization: checked })
                         }
                       />
-                      <Toggle
-                        id="series-autoplay"
-                        label="Audio auto"
-                        checked={autoplay}
-                        onChange={(checked) => update({ autoplay: checked })}
-                      />
+                      {speechLocale && (
+                        <Toggle
+                          id="series-autoplay"
+                          label="Audio auto"
+                          checked={autoplay}
+                          onChange={(checked) => update({ autoplay: checked })}
+                        />
+                      )}
                     </div>
 
                     {/* Keyboard-only: on a phone the shortcuts have nothing
                         to press, and the line eats a card's worth of height. */}
                     <p className="hidden text-center text-xs text-muted-foreground sm:block">
-                      Espace : retourner · ← : à revoir · → : acquis · S :
-                      écouter · Retour arrière : carte précédente
+                      Espace : retourner · ← : à revoir · → : acquis
+                      {speechLocale && " · S : écouter"} · Retour arrière :
+                      carte précédente
                     </p>
                   </>
                 )
@@ -507,21 +524,21 @@ export function SeriesDialog({
                       className="flex items-center gap-1 rounded-md px-1 py-0.5 hover:bg-accent"
                     >
                       <div className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate text-sm" lang="ko">
-                          {word.korean}
-                        </span>
+                        <span className="truncate text-sm">{word.front}</span>
                         <span className="truncate text-xs text-muted-foreground">
-                          {word.translation}
+                          {word.back}
                         </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Écouter ${word.korean}`}
-                        onClick={() => speak(word.korean)}
-                      >
-                        <Volume2Icon />
-                      </Button>
+                      {speechLocale && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Écouter ${word.front}`}
+                          onClick={() => speak(word.front)}
+                        >
+                          <Volume2Icon />
+                        </Button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -547,9 +564,12 @@ export function SeriesDialog({
 function FrontSidePicker({
   value,
   onChange,
+  showAudio,
 }: {
   value: FrontSide
   onChange: (frontSide: FrontSide) => void
+  /** `false` for a course with no spoken language — nothing to listen to. */
+  showAudio: boolean
 }) {
   return (
     <ToggleGroup
@@ -564,10 +584,10 @@ function FrontSidePicker({
       // itself rather than pushing the layout past the viewport.
       className="max-w-full overflow-x-auto"
     >
-      <ToggleGroupItem value="korean">Coréen</ToggleGroupItem>
-      <ToggleGroupItem value="translation">Français</ToggleGroupItem>
+      <ToggleGroupItem value="front">Recto</ToggleGroupItem>
+      <ToggleGroupItem value="back">Verso</ToggleGroupItem>
       <ToggleGroupItem value="random">Aléatoire</ToggleGroupItem>
-      <ToggleGroupItem value="audio">Écoute</ToggleGroupItem>
+      {showAudio && <ToggleGroupItem value="audio">Écoute</ToggleGroupItem>}
     </ToggleGroup>
   )
 }
@@ -598,12 +618,15 @@ function SetupScreen({
   settings,
   source,
   pools,
+  speechLocale,
   onChange,
   onStart,
 }: {
   settings: Settings
   source: DeckSource
-  pools: Record<DeckSource, Word[]>
+  pools: Record<DeckSource, Card[]>
+  /** BCP-47 locale of the course's spoken language, or `null` for none. */
+  speechLocale: string | null
   onChange: (patch: Partial<Settings>) => void
   onStart: (size: number | null) => void
 }) {
@@ -629,6 +652,7 @@ function SetupScreen({
           <FrontSidePicker
             value={settings.frontSide}
             onChange={(frontSide) => onChange({ frontSide })}
+            showAudio={Boolean(speechLocale)}
           />
         </Field>
 
@@ -696,16 +720,18 @@ function SetupScreen({
           />
           <Toggle
             id="setup-romanization"
-            label="Afficher la prononciation"
+            label="Afficher l'indice phonétique"
             checked={settings.romanization}
             onChange={(checked) => onChange({ romanization: checked })}
           />
-          <Toggle
-            id="setup-autoplay"
-            label="Lire le coréen automatiquement"
-            checked={settings.autoplay}
-            onChange={(checked) => onChange({ autoplay: checked })}
-          />
+          {speechLocale && (
+            <Toggle
+              id="setup-autoplay"
+              label="Lire le recto automatiquement"
+              checked={settings.autoplay}
+              onChange={(checked) => onChange({ autoplay: checked })}
+            />
+          )}
         </div>
 
         <Button
@@ -746,7 +772,7 @@ function Summary({
   onClose,
 }: {
   known: number
-  failed: Word[]
+  failed: Card[]
   onReplay: () => void
   onRestart: () => void
   onClose: () => void

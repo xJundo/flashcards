@@ -43,6 +43,41 @@
       "when": 1788265408043,
       "tag": "0005_course_sheets",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788760982908,
+      "tag": "0006_add_spaces_folders_images",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788760990681,
+      "tag": "0007_backfill_default_space",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788761653628,
+      "tag": "0008_rename_cards_generic_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788761811432,
+      "tag": "0009_rewrite_run_front_side_vocab",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788764956034,
+      "tag": "0010_add_space_folder_colors_banners",
+      "breakpoints": true
     }
   ]
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 import { requireWriteAccess } from "@/lib/guard"
 import { updateCourse } from "@/lib/store"
-import type { Word } from "@/lib/types"
+import type { Card } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
 
@@ -13,21 +13,21 @@ export async function PATCH(request: Request, { params }: Params) {
   const access = await requireWriteAccess(id)
   if ("denied" in access) return access.denied
 
-  const body = (await request.json().catch(() => ({}))) as Partial<Word>
+  const body = (await request.json().catch(() => ({}))) as Partial<Card>
 
   let found = false
   const course = await updateCourse(id, (current) => ({
     ...current,
-    words: current.words.map((word) => {
+    cards: current.cards.map((word) => {
       if (word.id !== wordId) return word
       found = true
       // Rebuilt field by field so that clearing `note` drops the key entirely.
       const note = (body.note ?? word.note ?? "").trim()
       return {
         id: word.id,
-        korean: (body.korean ?? word.korean).trim(),
-        romanization: (body.romanization ?? word.romanization).trim(),
-        translation: (body.translation ?? word.translation).trim(),
+        front: (body.front ?? word.front).trim(),
+        phonetic: (body.phonetic ?? word.phonetic).trim(),
+        back: (body.back ?? word.back).trim(),
         ...(note ? { note } : {}),
       }
     }),
@@ -47,11 +47,11 @@ export async function DELETE(_request: Request, { params }: Params) {
 
   let found = false
   const course = await updateCourse(id, (current) => {
-    const words = current.words.filter((word) => {
+    const cards = current.cards.filter((word) => {
       if (word.id === wordId) found = true
       return word.id !== wordId
     })
-    return { ...current, words }
+    return { ...current, cards }
   })
 
   if (!course)

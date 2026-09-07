@@ -17,7 +17,7 @@ export type Settings = SeriesSettings & {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  frontSide: "korean",
+  frontSide: "front",
   shuffled: true,
   source: "all",
   size: null,

@@ -1,9 +1,13 @@
-export type Word = {
+export type Card = {
   id: string
-  korean: string
-  romanization: string
-  translation: string
+  front: string
+  /** A generic pronunciation/reading hint — romanization, IPA, anything. */
+  phonetic: string
+  back: string
   note?: string
+  /** Whether that face carries an uploaded image, alongside or instead of text. */
+  frontImage?: boolean
+  backImage?: boolean
 }
 
 /** How a learner appears to everyone else: the handle, never the email. */
@@ -17,16 +21,25 @@ export type Course = {
   title: string
   /** ISO date of the lesson, `YYYY-MM-DD`. */
   date: string
+  /** The space (subject) this course belongs to. */
+  spaceId: string
+  /** `null` means the course sits at the space's root, not inside a folder. */
+  folderId: string | null
+  /**
+   * BCP-47 locale for pronunciation (e.g. `ko-KR`). `null` means the course
+   * carries no spoken-language content, so no TTS UI is shown for it.
+   */
+  speechLocale: string | null
   createdAt: string
   updatedAt: string
   /** `null` once the author deletes their account: readable, but frozen. */
   owner: Author | null
-  words: Word[]
+  cards: Card[]
   /** Whether a revision sheet (PDF) has been uploaded for this lesson. */
   hasSheet: boolean
 }
 
-export type CourseSummary = Omit<Course, "words"> & {
+export type CourseSummary = Omit<Course, "cards"> & {
   wordCount: number
   /** Whether the current viewer may change this lesson. */
   editable: boolean
@@ -75,8 +88,43 @@ export type GlobalStats = {
   }
 }
 
+/** A top-level subject: a language, or anything else worth its own catalogue. */
+export type Space = {
+  id: string
+  title: string
+  slug: string
+  owner: Author | null
+  /** A palette key from `lib/colors.ts`, or `null` for the neutral default. */
+  color: string | null
+  /** Whether a cover banner has been uploaded for this space. */
+  hasBanner: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type SpaceSummary = Space & {
+  /** Courses anywhere in the space, folders included. */
+  courseCount: number
+}
+
+export type Folder = {
+  id: string
+  spaceId: string
+  parentId: string | null
+  title: string
+  /** A palette key from `lib/colors.ts`, or `null` for the neutral default. */
+  color: string | null
+  /** Whether a cover banner has been uploaded for this folder. */
+  hasBanner: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+/** One crumb of the trail back to a space's root. */
+export type Breadcrumb = { id: string; title: string; href: string }
+
 /** `audio` plays the word without showing it, to write it from hearing alone. */
-export type FrontSide = "korean" | "translation" | "random" | "audio"
+export type FrontSide = "front" | "back" | "random" | "audio"
 
 export type CardOrder = "original" | "shuffled"
 

@@ -29,15 +29,20 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { useKoreanSpeech } from "@/hooks/use-korean-speech"
+import { useSpeech } from "@/hooks/use-speech"
 import { useCourseProgress } from "@/lib/progress"
 import { KNOWN_STREAK } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import type { RunResult, SeriesMode, Word, WordStat } from "@/lib/types"
+import type {
+  Card as FlashCard,
+  RunResult,
+  SeriesMode,
+  WordStat,
+} from "@/lib/types"
 
 const FRONT_LABEL: Record<string, string> = {
-  korean: "coréen → français",
-  translation: "français → coréen",
+  front: "recto → verso",
+  back: "verso → recto",
   random: "sens aléatoire",
   audio: "à l'écoute",
   mixed: "sens changé en cours de route",
@@ -54,17 +59,20 @@ export function CoursePractice({
   signedIn,
   completedAt,
   hasSheet,
+  speechLocale,
 }: {
   courseId: string
-  words: Word[]
+  words: FlashCard[]
   /** Progress is only recorded for an account; anonymous revision is untracked. */
   signedIn: boolean
   /** When the viewer acquired every word, ISO — as the server knew it. */
   completedAt: string | null
   /** Whether the lesson has a revision sheet the series dialog can open. */
   hasSheet: boolean
+  /** BCP-47 locale of the course's spoken language, or `null` for none. */
+  speechLocale: string | null
 }) {
-  const { speak } = useKoreanSpeech()
+  const { speak } = useSpeech(speechLocale)
   const { progress, send } = useCourseProgress()
   const [mode, setMode] = React.useState<SeriesMode | null>(null)
 
@@ -107,12 +115,12 @@ export function CoursePractice({
   // them: "à revoir" only goes up, "connus" only goes down, "en cours" both.
   const acquire: PanelAction = {
     icon: <CheckIcon />,
-    label: (word) => `Marquer ${word.korean} comme connu`,
+    label: (word) => `Marquer ${word.front} comme connu`,
     run: (id) => void send({ acquired: id }),
   }
   const sendBack: PanelAction = {
     icon: <RotateCcwIcon />,
-    label: (word) => `Remettre ${word.korean} à revoir`,
+    label: (word) => `Remettre ${word.front} à revoir`,
     run: (id) => void send({ review: id }),
   }
 
@@ -155,7 +163,7 @@ export function CoursePractice({
               title="À revoir"
               words={review}
               empty="Les mots ratés en série arrivent ici, jusqu'à ce que tu les réussisses à nouveau."
-              onSpeak={speak}
+              onSpeak={speechLocale ? speak : undefined}
               stats={progress.stats}
               actions={[acquire]}
             />
@@ -166,7 +174,7 @@ export function CoursePractice({
               title="En cours"
               words={learning}
               empty="Un mot réussi au moins une fois, mais pas encore assez souvent d'affilée, attend ici."
-              onSpeak={speak}
+              onSpeak={speechLocale ? speak : undefined}
               stats={progress.stats}
               actions={[acquire, sendBack]}
             />
@@ -175,7 +183,7 @@ export function CoursePractice({
               title="Connus"
               words={known}
               empty={`Réussis un mot ${KNOWN_STREAK} séries de suite pour le voir arriver ici.`}
-              onSpeak={speak}
+              onSpeak={speechLocale ? speak : undefined}
               stats={progress.stats}
               actions={[sendBack]}
             />
@@ -208,6 +216,7 @@ export function CoursePractice({
         hasSheet={hasSheet}
         words={words}
         stats={progress.stats}
+        speechLocale={speechLocale}
         onOpenChange={(open) => setMode(open ? mode : null)}
         onRecord={(report: RunReport) => void send({ run: report })}
       />
@@ -218,7 +227,7 @@ export function CoursePractice({
 /** A move a learner can make on a word by hand, from a panel. */
 type PanelAction = {
   icon: React.ReactNode
-  label: (word: Word) => string
+  label: (word: FlashCard) => string
   run: (id: string) => void
 }
 
@@ -234,9 +243,10 @@ function WordPanel({
 }: {
   standing: StandingKey
   title: string
-  words: Word[]
+  words: FlashCard[]
   empty: string
-  onSpeak: (text: string) => void
+  /** `undefined` for a course with no spoken-language content. */
+  onSpeak: ((text: string) => void) | undefined
   stats: Record<string, WordStat>
   actions: PanelAction[]
 }) {
@@ -263,11 +273,9 @@ function WordPanel({
                 className="flex items-center gap-1 rounded-md px-1 py-0.5 hover:bg-accent"
               >
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-sm" lang="ko">
-                    {word.korean}
-                  </span>
+                  <span className="truncate text-sm">{word.front}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {word.translation}
+                    {word.back}
                   </span>
                 </div>
                 {/* Only "en cours" has a distance left to run: on the other two
@@ -280,14 +288,16 @@ function WordPanel({
                     {stats[word.id]?.streak ?? 0}/{KNOWN_STREAK}
                   </span>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Écouter ${word.korean}`}
-                  onClick={() => onSpeak(word.korean)}
-                >
-                  <Volume2Icon />
-                </Button>
+                {onSpeak && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Écouter ${word.front}`}
+                    onClick={() => onSpeak(word.front)}
+                  >
+                    <Volume2Icon />
+                  </Button>
+                )}
                 {actions.map((action, index) => (
                   <Button
                     key={index}
@@ -316,7 +326,7 @@ function RunHistory({
   onReset,
 }: {
   runs: RunResult[]
-  byId: Map<string, Word>
+  byId: Map<string, FlashCard>
   onDelete: (id: string) => void
   onReset: () => void
 }) {
@@ -420,12 +430,12 @@ function RunWords({
   title: string
   tone: "known" | "failed"
   ids: string[]
-  byId: Map<string, Word>
+  byId: Map<string, FlashCard>
 }) {
   // A word deleted from the lesson since the series was played leaves a hole.
   const words = ids
     .map((id) => byId.get(id))
-    .filter((word): word is Word => Boolean(word))
+    .filter((word): word is FlashCard => Boolean(word))
   if (words.length === 0) return null
 
   return (
@@ -442,11 +452,9 @@ function RunWords({
         {words.map((word) => (
           <li key={word.id}>
             <Badge variant={tone === "known" ? "secondary" : "outline"}>
-              <span lang="ko">{word.korean}</span>
-              {word.translation && (
-                <span className="text-muted-foreground">
-                  {word.translation}
-                </span>
+              <span>{word.front}</span>
+              {word.back && (
+                <span className="text-muted-foreground">{word.back}</span>
               )}
             </Badge>
           </li>
