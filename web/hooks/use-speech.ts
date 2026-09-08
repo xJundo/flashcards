@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import { stripRichText } from "@/lib/rich-text"
+
 type SpeechState = {
   speak: (text: string) => void
   stop: () => void
@@ -64,8 +66,10 @@ export function useSpeech(locale: string | null): SpeechState {
     (text: string) => {
       if (!locale) return
       // Strip arrows used in conjugation notes (e.g. "오다 → 와요"): they get
-      // read aloud as "flèche" instead of being skipped.
-      const value = text
+      // read aloud as "flèche" instead of being skipped. Rich-text markup
+      // (`**bold**`, `==color:text==`) is stripped the same way — a voice
+      // has no use for it either.
+      const value = stripRichText(text)
         .replace(/[→←↔⇒⇐⇔]/g, " ")
         .replace(/\s+/g, " ")
         .trim()

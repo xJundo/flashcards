@@ -4,6 +4,7 @@ import type * as React from "react"
 import { Volume2Icon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { RichText } from "@/components/rich-text"
 import { cn } from "@/lib/utils"
 import type { Card, FrontSide, TextAlign } from "@/lib/types"
 
@@ -185,7 +186,7 @@ function CardFace({
                 )}
                 lang={side === "front" ? (speechLocale ?? undefined) : undefined}
               >
-                {text}
+                <RichText text={text} />
               </p>
             )}
             {!text && !image && (
@@ -199,7 +200,9 @@ function CardFace({
           <p className="text-center text-muted-foreground">{word.phonetic}</p>
         )}
         {reveal && side === "front" && word.back && (
-          <p className="text-center text-muted-foreground">{word.back}</p>
+          <p className="text-center text-muted-foreground">
+            <RichText text={word.back} />
+          </p>
         )}
         {note && word.note && (
           <p
@@ -213,7 +216,7 @@ function CardFace({
               noteAlign === "center" && "text-pretty"
             )}
           >
-            {word.note}
+            <RichText text={word.note} />
           </p>
         )}
       </div>

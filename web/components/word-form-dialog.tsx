@@ -3,7 +3,15 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 
+import {
+  AlignCenterIcon,
+  AlignJustifyIcon,
+  AlignLeftIcon,
+  AlignRightIcon,
+} from "lucide-react"
+
 import { CardImageField } from "@/components/card-image-field"
+import { RichTextToolbar } from "@/components/rich-text-toolbar"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,9 +30,11 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { toast } from "@/components/ui/toast"
 import { api } from "@/lib/api"
-import type { Card } from "@/lib/types"
+import { stripRichText } from "@/lib/rich-text"
+import type { Card, TextAlign } from "@/lib/types"
 
 type WordFormDialogProps = {
   courseId: string
@@ -35,7 +45,13 @@ type WordFormDialogProps = {
   children?: React.ReactNode
 }
 
-const EMPTY = { front: "", phonetic: "", back: "", note: "" }
+const EMPTY = {
+  front: "",
+  phonetic: "",
+  back: "",
+  note: "",
+  align: "center" as TextAlign,
+}
 
 function toValues(word: Card | undefined) {
   if (!word) return EMPTY
@@ -44,8 +60,16 @@ function toValues(word: Card | undefined) {
     phonetic: word.phonetic,
     back: word.back,
     note: word.note ?? "",
+    align: word.align ?? "center",
   }
 }
+
+const ALIGN_OPTIONS: { value: TextAlign; label: string; icon: typeof AlignLeftIcon }[] = [
+  { value: "left", label: "À gauche", icon: AlignLeftIcon },
+  { value: "center", label: "Centré", icon: AlignCenterIcon },
+  { value: "right", label: "À droite", icon: AlignRightIcon },
+  { value: "justify", label: "Justifié", icon: AlignJustifyIcon },
+]
 
 export function WordFormDialog({
   courseId,
@@ -64,6 +88,8 @@ export function WordFormDialog({
   const [values, setValues] = React.useState(() => toValues(word))
   const [pending, setPending] = React.useState(false)
   const frontRef = React.useRef<HTMLInputElement>(null)
+  const backRef = React.useRef<HTMLInputElement>(null)
+  const noteRef = React.useRef<HTMLInputElement>(null)
   // Only used for a brand new word: it has no id yet to upload an image
   // against, so the file is held here and pushed up once the word is saved.
   const [frontImage, setFrontImage] = React.useState<File | null>(null)
@@ -116,7 +142,7 @@ export function WordFormDialog({
         if (created && backImage)
           await uploadImage(created.id, "back", backImage)
         toast.add({
-          title: `« ${values.front || values.back} » ajouté`,
+          title: `« ${stripRichText(values.front || values.back)} » ajouté`,
           type: "success",
         })
       }
@@ -143,7 +169,7 @@ export function WordFormDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {children && <DialogTrigger render={children as React.ReactElement} />}
-      <DialogContent className="max-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)]">
+      <DialogContent className="max-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)] sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
             {word ? "Modifier le mot" : "Ajouter un mot"}
@@ -159,7 +185,14 @@ export function WordFormDialog({
           {/* Scrolls on short viewports so the footer stays reachable. */}
           <FieldGroup className="-mx-1 overflow-y-auto px-1">
             <Field>
-              <FieldLabel htmlFor="word-front">Recto</FieldLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel htmlFor="word-front">Recto</FieldLabel>
+                <RichTextToolbar
+                  inputRef={frontRef}
+                  value={values.front}
+                  onChange={(front) => setValues({ ...values, front })}
+                />
+              </div>
               <Input
                 id="word-front"
                 ref={frontRef}
@@ -200,15 +233,44 @@ export function WordFormDialog({
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="word-back">Verso</FieldLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel htmlFor="word-back">Verso</FieldLabel>
+                <RichTextToolbar
+                  inputRef={backRef}
+                  value={values.back}
+                  onChange={(back) => setValues({ ...values, back })}
+                />
+              </div>
               <Input
                 id="word-back"
+                ref={backRef}
                 value={values.back}
                 onChange={(event) =>
                   setValues({ ...values, back: event.target.value })
                 }
                 placeholder="bonjour"
               />
+            </Field>
+            <Field>
+              <FieldLabel>Alignement (verso et note)</FieldLabel>
+              <ToggleGroup
+                value={[values.align]}
+                onValueChange={(next) =>
+                  setValues({
+                    ...values,
+                    align: (next[0] as TextAlign | undefined) ?? values.align,
+                  })
+                }
+                variant="outline"
+                spacing={0}
+                aria-label="Alignement du verso et de la note"
+              >
+                {ALIGN_OPTIONS.map(({ value, label, icon: Icon }) => (
+                  <ToggleGroupItem key={value} value={value} aria-label={label}>
+                    <Icon />
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
             </Field>
             {word ? (
               <CardImageField
@@ -228,9 +290,17 @@ export function WordFormDialog({
               />
             )}
             <Field>
-              <FieldLabel htmlFor="word-note">Note</FieldLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel htmlFor="word-note">Note</FieldLabel>
+                <RichTextToolbar
+                  inputRef={noteRef}
+                  value={values.note}
+                  onChange={(note) => setValues({ ...values, note })}
+                />
+              </div>
               <Input
                 id="word-note"
+                ref={noteRef}
                 value={values.note}
                 onChange={(event) =>
                   setValues({ ...values, note: event.target.value })

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { UploadIcon } from "lucide-react"
+import { CopyIcon, UploadIcon } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -23,11 +23,13 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { RichText } from "@/components/rich-text"
 import { Spinner } from "@/components/ui/spinner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
 import { api } from "@/lib/api"
+import { HIGHLIGHT_KEYS } from "@/lib/colors"
 import type { Card, Course } from "@/lib/types"
 
 const JSON_PLACEHOLDER = `[
@@ -39,6 +41,34 @@ const JSON_PLACEHOLDER = `[
 const TEXT_PLACEHOLDER = `안녕하세요 - annyeonghaseyo - bonjour
 감사합니다 | gamsahamnida | merci
 사랑 (sarang) : amour`
+
+/**
+ * The full shape the JSON importer accepts, meant to be copied and handed
+ * to an AI so it generates a course directly in this format. Field aliases
+ * (mot/korean/word…) live in `lib/normalize.ts` — only the canonical names
+ * are documented here to keep this readable.
+ */
+const JSON_SCHEMA = `{
+  "title": string,   // Titre du cours. Optionnel : sinon "Cours du <date>".
+  "date": "AAAA-MM-JJ",   // Optionnel : sinon aujourd'hui.
+  "words": [
+    {
+      "front": string,      // Recto (le mot coréen).
+      "phonetic": string,   // Indice de prononciation (romanisation).
+      "back": string,       // Verso (la traduction).
+      "note": string,       // Optionnel : note affichée sous le verso.
+      "align": "left" | "center" | "right" | "justify"
+        // Optionnel, "center" par défaut. Alignement du verso et de la note.
+    }
+  ]
+}
+
+// Plusieurs cours dans un seul fichier : un tableau de ce même objet.
+
+// Mise en forme, utilisable dans "front", "back" et "note" :
+//   **texte**              -> gras
+//   ==couleur:texte==      -> surligné (couleur : ${HIGHLIGHT_KEYS.join(", ")})
+//   ==couleur:**texte**==  -> gras + surligné (uniquement dans cet ordre)`
 
 type Preview = {
   courses: { title?: string; date?: string; words: Card[] }[]
@@ -58,11 +88,15 @@ export function ImportDialog({
 }) {
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
+  const [schemaOpen, setSchemaOpen] = React.useState(false)
   const [mode, setMode] = React.useState("json")
   const [json, setJson] = React.useState("")
   const [text, setText] = React.useState("")
   const [title, setTitle] = React.useState("")
   const [date, setDate] = React.useState("")
+  /** Once the user edits a field by hand, detection stops overwriting it. */
+  const titleTouched = React.useRef(false)
+  const dateTouched = React.useRef(false)
   /** Tagged with the input it was computed from, so a stale result never shows. */
   const [parsed, setParsed] = React.useState<{
     source: string
@@ -76,6 +110,12 @@ export function ImportDialog({
     () => (mode === "json" ? { json } : { text }),
     [json, mode, text]
   )
+  // The title/date overrides only apply server-side when the payload
+  // resolves to a single course (see `courses/route.ts`) — with several,
+  // each keeps its own detected title/date and these inputs would be no-ops.
+  const singleCourse =
+    preview && preview.courses.length === 1 ? preview.courses[0] : undefined
+  const multipleCourses = Boolean(preview && preview.courses.length > 1)
 
   function handleOpenChange(next: boolean) {
     if (!next) {
@@ -84,9 +124,18 @@ export function ImportDialog({
       setTitle("")
       setDate("")
       setParsed(null)
+      titleTouched.current = false
+      dateTouched.current = false
     }
     setOpen(next)
   }
+
+  // Reflects the detected title/date into the inputs as soon as they're
+  // known, without clobbering anything the user already typed by hand.
+  React.useEffect(() => {
+    if (!titleTouched.current && singleCourse?.title) setTitle(singleCourse.title)
+    if (!dateTouched.current && singleCourse?.date) setDate(singleCourse.date)
+  }, [singleCourse?.title, singleCourse?.date])
 
   // Live preview: debounced so typing stays responsive.
   React.useEffect(() => {
@@ -198,10 +247,22 @@ export function ImportDialog({
 
         <div className="-mx-1 flex flex-col gap-4 overflow-y-auto px-1">
           <Tabs value={mode} onValueChange={(value) => setMode(String(value))}>
-            <TabsList>
-              <TabsTrigger value="json">JSON</TabsTrigger>
-              <TabsTrigger value="text">Texte brut</TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between gap-2">
+              <TabsList>
+                <TabsTrigger value="json">JSON</TabsTrigger>
+                <TabsTrigger value="text">Texte brut</TabsTrigger>
+              </TabsList>
+              {mode === "json" && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSchemaOpen(true)}
+                >
+                  Voir le schéma
+                </Button>
+              )}
+            </div>
             <TabsContent value="json">
               <Textarea
                 value={json}
@@ -246,7 +307,11 @@ export function ImportDialog({
                 <Input
                   id="import-title"
                   value={title}
-                  onChange={(event) => setTitle(event.target.value)}
+                  onChange={(event) => {
+                    titleTouched.current = true
+                    setTitle(event.target.value)
+                  }}
+                  disabled={multipleCourses}
                   placeholder="Détecté depuis la note"
                 />
               </Field>
@@ -256,9 +321,19 @@ export function ImportDialog({
                   id="import-date"
                   type="date"
                   value={date}
-                  onChange={(event) => setDate(event.target.value)}
+                  onChange={(event) => {
+                    dateTouched.current = true
+                    setDate(event.target.value)
+                  }}
+                  disabled={multipleCourses}
                 />
               </Field>
+              {multipleCourses && (
+                <FieldDescription className="sm:col-span-2">
+                  Plusieurs cours détectés : chacun garde son propre titre et
+                  sa propre date.
+                </FieldDescription>
+              )}
             </div>
           </FieldGroup>
 
@@ -309,12 +384,14 @@ export function ImportDialog({
                             className="border-b last:border-b-0"
                           >
                             <td className="px-3 py-1.5 font-medium">
-                              {word.front}
+                              <RichText text={word.front} />
                             </td>
                             <td className="px-3 py-1.5 text-muted-foreground">
                               {word.phonetic}
                             </td>
-                            <td className="px-3 py-1.5">{word.back}</td>
+                            <td className="px-3 py-1.5">
+                              <RichText text={word.back} />
+                            </td>
                           </tr>
                         ))}
                     </tbody>
@@ -352,6 +429,39 @@ export function ImportDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <Dialog open={schemaOpen} onOpenChange={setSchemaOpen}>
+        <DialogContent className="max-h-[calc(100svh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Schéma JSON</DialogTitle>
+            <DialogDescription>
+              À copier-coller dans une IA pour lui faire générer un cours dans
+              le bon format.
+            </DialogDescription>
+          </DialogHeader>
+          <pre className="-mx-1 overflow-auto rounded-lg border bg-muted/50 px-3 py-2.5 text-xs">
+            {JSON_SCHEMA}
+          </pre>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setSchemaOpen(false)}
+            >
+              Fermer
+            </Button>
+            <Button
+              type="button"
+              onClick={async () => {
+                await navigator.clipboard.writeText(JSON_SCHEMA)
+                toast.add({ title: "Schéma copié", type: "success" })
+              }}
+            >
+              <CopyIcon data-icon="inline-start" />
+              Copier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

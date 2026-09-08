@@ -40,6 +40,38 @@ export const COLOR_SWATCH: Record<ColorKey, string> = {
   pink: "bg-pink-400 dark:bg-pink-500",
 }
 
+/**
+ * The highlight palette usable from a word's rich-text toolbar. Deliberately
+ * separate from `COLOR_KEYS` (and much smaller): a highlight sits behind text
+ * people need to keep reading, so it needs to stay a soft tint at every size
+ * rather than the bold accent dot used for spaces and folders.
+ */
+export const HIGHLIGHT_KEYS = ["yellow", "green", "blue", "pink", "purple"] as const
+
+export type HighlightKey = (typeof HIGHLIGHT_KEYS)[number]
+
+export function isHighlightKey(value: string): value is HighlightKey {
+  return (HIGHLIGHT_KEYS as readonly string[]).includes(value)
+}
+
+/** The solid dot shown for each choice in the highlight color picker. */
+export const HIGHLIGHT_SWATCH: Record<HighlightKey, string> = {
+  yellow: "bg-yellow-400 dark:bg-yellow-500",
+  green: "bg-green-400 dark:bg-green-500",
+  blue: "bg-blue-400 dark:bg-blue-500",
+  pink: "bg-pink-400 dark:bg-pink-500",
+  purple: "bg-purple-400 dark:bg-purple-500",
+}
+
+/** The actual highlight rendered behind a word's text, on a card. */
+export const HIGHLIGHT_MARK_CLASS: Record<HighlightKey, string> = {
+  yellow: "bg-yellow-200/80 dark:bg-yellow-900/50",
+  green: "bg-green-200/80 dark:bg-green-900/50",
+  blue: "bg-blue-200/80 dark:bg-blue-900/50",
+  pink: "bg-pink-200/80 dark:bg-pink-900/50",
+  purple: "bg-purple-200/80 dark:bg-purple-900/50",
+}
+
 /** The soft gradient used as a card's cover when it has no banner image. */
 export const COLOR_COVER: Record<ColorKey, string> = {
   slate: "from-slate-200 to-slate-100 dark:from-slate-700 dark:to-slate-800",

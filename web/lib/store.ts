@@ -1339,5 +1339,6 @@ export function createWord(input: Partial<Card>): Card {
     phonetic: input.phonetic?.trim() ?? "",
     back: input.back?.trim() ?? "",
     ...(input.note?.trim() ? { note: input.note.trim() } : {}),
+    ...(input.align ? { align: input.align } : {}),
   }
 }

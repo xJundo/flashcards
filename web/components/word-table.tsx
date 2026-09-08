@@ -12,6 +12,7 @@ import {
   TrashIcon,
 } from "lucide-react"
 
+import { RichText } from "@/components/rich-text"
 import { SpeakButton } from "@/components/speak-button"
 import { WordFormDialog } from "@/components/word-form-dialog"
 import {
@@ -198,16 +199,20 @@ export function WordTable({
                   size="icon"
                 />
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="font-medium break-words">{word.front}</span>
+                  <span className="font-medium break-words">
+                    <RichText text={word.front} />
+                  </span>
                   {word.phonetic && (
                     <span className="text-sm break-words text-muted-foreground">
                       {word.phonetic}
                     </span>
                   )}
-                  <span className="text-sm break-words">{word.back}</span>
+                  <span className="text-sm break-words">
+                    <RichText text={word.back} />
+                  </span>
                   {word.note && (
                     <span className="mt-1 text-xs break-words text-muted-foreground">
-                      {word.note}
+                      <RichText text={word.note} />
                     </span>
                   )}
                   {tracked && (
@@ -299,16 +304,16 @@ export function WordTable({
                       />
                     </TableCell>
                     <TableCell className="font-medium break-words">
-                      {word.front}
+                      <RichText text={word.front} />
                     </TableCell>
                     <TableCell className="break-words text-muted-foreground">
                       {word.phonetic}
                     </TableCell>
                     <TableCell className="break-words">
-                      {word.back}
+                      <RichText text={word.back} />
                       {word.note && (
                         <span className="mt-1 block text-xs text-muted-foreground">
-                          {word.note}
+                          <RichText text={word.note} />
                         </span>
                       )}
                     </TableCell>
