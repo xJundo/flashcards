@@ -107,6 +107,16 @@ export function CardImageField(props: CardImageFieldProps) {
     void upload(event.dataTransfer.files[0])
   }
 
+  function handlePaste(event: React.ClipboardEvent<HTMLDivElement>) {
+    const item = Array.from(event.clipboardData.items).find((entry) =>
+      entry.type.startsWith("image/")
+    )
+    const file = item?.getAsFile()
+    if (!file) return
+    event.preventDefault()
+    void upload(file)
+  }
+
   async function remove() {
     if (props.mode === "deferred") {
       props.onFileChange(null)
@@ -123,11 +133,16 @@ export function CardImageField(props: CardImageFieldProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <FieldLabel>{label}</FieldLabel>
       <div
+        // Focusable so a click-then-Ctrl+V paste has somewhere to land —
+        // the paste event only fires on (or under) whatever's focused.
+        tabIndex={0}
+        role="group"
+        aria-label={`${label} : glisse-dépose, colle ou choisis une image`}
         className={cn(
-          "flex flex-wrap items-center gap-3 rounded-md outline-2 outline-transparent outline-offset-4 transition-colors",
+          "flex flex-wrap items-center gap-3 rounded-md outline-2 outline-transparent outline-offset-4 transition-colors focus-visible:outline-dashed focus-visible:outline-ring",
           dragOver && "outline-dashed outline-primary"
         )}
         onDragOver={(event) => {
@@ -136,6 +151,7 @@ export function CardImageField(props: CardImageFieldProps) {
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
+        onPaste={handlePaste}
       >
         {imageSrc ? (
           // Served from our own API (or a local object URL), not an
@@ -188,6 +204,11 @@ export function CardImageField(props: CardImageFieldProps) {
           )}
         </div>
       </div>
+      {!hasImage && (
+        <p className="text-xs text-muted-foreground">
+          Glisse-dépose une image, ou clique ici et fais Ctrl+V pour coller.
+        </p>
+      )}
     </div>
   )
 }
