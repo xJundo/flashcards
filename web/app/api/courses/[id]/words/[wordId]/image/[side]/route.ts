@@ -38,6 +38,11 @@ export async function GET(_request: Request, { params }: Params) {
       "content-type": image.contentType,
       "content-length": String(image.size),
       "cache-control": "private, max-age=31536000, immutable",
+      // An SVG opened directly (not through an <img>) could run script:
+      // this sandboxes it, and stops browsers guessing another type.
+      "x-content-type-options": "nosniff",
+      "content-security-policy":
+        "default-src 'none'; style-src 'unsafe-inline'; sandbox",
     },
   })
 }
@@ -69,10 +74,10 @@ export async function POST(request: Request, { params }: Params) {
     )
 
   const data = Buffer.from(await file.arrayBuffer())
-  const contentType = sniffImage(data)
+  const contentType = sniffImage(data, { svg: true })
   if (!contentType)
     return NextResponse.json(
-      { error: "Format d'image non reconnu (PNG, JPEG, WEBP ou GIF attendu)." },
+      { error: "Format d'image non reconnu (PNG, JPEG, WEBP, GIF ou SVG attendu)." },
       { status: 400 }
     )
 

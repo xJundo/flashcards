@@ -12,7 +12,13 @@ import { cn } from "@/lib/utils"
 
 type Side = "front" | "back"
 
-const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+const ACCEPTED_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+]
 
 type CardImageFieldProps = { label: string } & (
   | {
@@ -65,7 +71,7 @@ export function CardImageField(props: CardImageFieldProps) {
     if (!file) return
     if (!ACCEPTED_TYPES.includes(file.type)) {
       toast.add({
-        title: "Format d'image non reconnu (PNG, JPEG, WEBP ou GIF attendu).",
+        title: "Format d'image non reconnu (PNG, JPEG, WEBP, GIF ou SVG attendu).",
         type: "error",
       })
       return
@@ -172,7 +178,7 @@ export function CardImageField(props: CardImageFieldProps) {
           <input
             ref={inputRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
+            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
             className="hidden"
             onChange={(event) => void upload(event.target.files?.[0])}
           />

@@ -308,7 +308,7 @@ function decodeImageDataUrl(dataUrl: string): CardImage | null {
   const data = Buffer.from(match[1], "base64")
   if (data.byteLength === 0 || data.byteLength > MAX_CARD_IMAGE_SIZE)
     return null
-  const contentType = sniffImage(data)
+  const contentType = sniffImage(data, { svg: true })
   return contentType ? { contentType, data, size: data.byteLength } : null
 }
 

@@ -59,6 +59,10 @@ const JSON_SCHEMA = `{
       "note": string,       // Optionnel : note affichée sous le verso.
       "align": "left" | "center" | "right" | "justify"
         // Optionnel, "center" par défaut. Alignement du verso et de la note.
+      "backImage": string,
+        // Optionnel : image du verso, en data URL base64
+        // ("data:image/svg+xml;base64,..."). PNG, JPEG, WEBP, GIF ou SVG,
+        // 5 Mo max. "frontImage" fait pareil pour le recto.
     }
   ]
 }
